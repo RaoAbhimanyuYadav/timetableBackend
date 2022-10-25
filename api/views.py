@@ -51,3 +51,25 @@ def instructorView(request):
         instruc = Instructor.objects.get(uid=request.data['uid'])
         instruc.delete()
         return Response({"message": "Instructor deleted successfully."})
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+def meetingTimeView(request):
+    if request.method == 'GET':
+        instance = MeetingTime.objects.all()
+        serializer = MeetingTimeSerializer(instance, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        instance, created = MeetingTime.objects.get_or_create(
+            pid=data['pid'])
+        instance.time = data['time']
+        instance.day = data['day']
+        instance.save()
+        return Response(
+            {"message": f"Meeting Time {'added' if created else 'updated'} successfully."}
+        )
+    elif request.method == 'DELETE':
+        instance = MeetingTime.objects.get(pid=request.data['pid'])
+        instance.delete()
+        return Response({"message": "Meeting Time deleted successfully."})
