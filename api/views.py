@@ -2,7 +2,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 from timetable.models import Room, Instructor, MeetingTime, Course, Department, Section
-from .serializers import RoomSerializer
+from .serializers import RoomSerializer, InstructorSerializer, MeetingTimeSerializer, CourseSerializer, DepartmentSerializer, SectionSerializer
 
 
 @api_view(['GET'])
@@ -16,8 +16,8 @@ def getRoutes(request):
     return Response(routes)
 
 
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-def room(request):
+@api_view(['GET', 'POST', 'DELETE'])
+def roomView(request):
     if request.method == 'GET':
         rooms = Room.objects.all()
         serializer = RoomSerializer(rooms, many=True)
@@ -32,3 +32,22 @@ def room(request):
         room = Room.objects.get(r_number=request.data['r_number'])
         room.delete()
         return Response({"message": "Room deleted successfully."})
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+def instructorView(request):
+    if request.method == 'GET':
+        instruc = Instructor.objects.all()
+        serializer = InstructorSerializer(instruc, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        instruc, created = Instructor.objects.get_or_create(
+            uid=data['uid'])
+        instruc.name = data['name']
+        instruc.save()
+        return Response({"message": f"Instructor {'added' if created else 'updated'} successfully."})
+    elif request.method == 'DELETE':
+        instruc = Instructor.objects.get(uid=request.data['uid'])
+        instruc.delete()
+        return Response({"message": "Instructor deleted successfully."})
