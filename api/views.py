@@ -2,7 +2,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 
 from timetable.models import Room, Instructor, MeetingTime, Course, Department, Section
-from .serializers import RoomSerializer, InstructorSerializer, MeetingTimeSerializer, CourseSerializer, DepartmentSerializer, SectionSerializer
+from .serializers import (
+    RoomSerializer, InstructorSerializer, MeetingTimeSerializer, CourseSerializer,
+    DepartmentSerializer, SectionSerializer
+)
 
 
 @api_view(['GET'])
@@ -46,7 +49,9 @@ def instructorView(request):
             uid=data['uid'])
         instruc.name = data['name']
         instruc.save()
-        return Response({"message": f"Instructor {'added' if created else 'updated'} successfully."})
+        return Response(
+            {"message": f"Instructor {'added' if created else 'updated'} successfully."}
+        )
     elif request.method == 'DELETE':
         instruc = Instructor.objects.get(uid=request.data['uid'])
         instruc.delete()
@@ -123,3 +128,32 @@ def departmentView(request):
             dept_name=request.data['dept_name'])
         instance.delete()
         return Response({"message": "Department deleted successfully."})
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+def sectionView(request):
+    if request.method == 'GET':
+        instance = Section.objects.all()
+        serializer = SectionSerializer(instance, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        department = Department.objects.get(
+            dept_name=data['dept_name'])
+        instance, created = Section.objects.get_or_create(
+            section_id=data['section_id'], department=department)
+        instance.num_class_in_week = data['num_class_in_week']
+        instance.course = Course.objects.get(
+            course_number=data['course_number'])
+        instance.meeting_time = MeetingTime.objects.get(pid=data['pid'])
+        instance.room = Room.objects.get(r_number=data['r_number'])
+        instance.instructor = Instructor.objects.get(uid=data['uid'])
+        instance.save()
+        return Response(
+            {"message": f"Section {'added' if created else 'updated'} successfully."}
+        )
+    elif request.method == 'DELETE':
+        instance = Section.objects.get(
+            section_id=request.data['section_id'])
+        instance.delete()
+        return Response({"message": "Section deleted successfully."})
