@@ -73,3 +73,29 @@ def meetingTimeView(request):
         instance = MeetingTime.objects.get(pid=request.data['pid'])
         instance.delete()
         return Response({"message": "Meeting Time deleted successfully."})
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+def courseView(request):
+    if request.method == 'GET':
+        instance = Course.objects.all()
+        serializer = CourseSerializer(instance, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        instance, created = Course.objects.get_or_create(
+            course_number=data['course_number'])
+        instance.course_name = data['course_name']
+        instance.max_numb_students = data['max_numb_students']
+        for instructor_uid in data['instructor_uids']:
+            instructor_obj = Instructor.objects.get(uid=instructor_uid)
+            instance.instructors.add(instructor_obj)
+        instance.save()
+        return Response(
+            {"message": f"Instructor Time {'added' if created else 'updated'} successfully."}
+        )
+    elif request.method == 'DELETE':
+        instance = Course.objects.get(
+            course_number=request.data['course_number'])
+        instance.delete()
+        return Response({"message": "Instructor deleted successfully."})

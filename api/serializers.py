@@ -22,6 +22,8 @@ class MeetingTimeSerializer(serializers.ModelSerializer):
 
 
 class CourseSerializer(serializers.ModelSerializer):
+    instructors = InstructorSerializer(many=True)
+
     class Meta:
         model = Course
         fields = '__all__'
