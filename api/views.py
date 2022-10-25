@@ -16,8 +16,19 @@ def getRoutes(request):
     return Response(routes)
 
 
-@api_view(['GET'])
-def getRooms(request):
-    rooms = Room.objects.all()
-    serializer = RoomSerializer(rooms, many=True)
-    return Response(serializer.data)
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+def room(request):
+    if request.method == 'GET':
+        rooms = Room.objects.all()
+        serializer = RoomSerializer(rooms, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        room, created = Room.objects.get_or_create(r_number=data['r_number'])
+        room.seating_capacity = data['seating_capacity']
+        room.save()
+        return Response({"message": f"Room {'added' if created else 'updated'} successfully."})
+    elif request.method == 'DELETE':
+        room = Room.objects.get(r_number=request.data['r_number'])
+        room.delete()
+        return Response({"message": "Room deleted successfully."})
