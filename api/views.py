@@ -92,10 +92,34 @@ def courseView(request):
             instance.instructors.add(instructor_obj)
         instance.save()
         return Response(
-            {"message": f"Instructor Time {'added' if created else 'updated'} successfully."}
+            {"message": f"Course {'added' if created else 'updated'} successfully."}
         )
     elif request.method == 'DELETE':
         instance = Course.objects.get(
             course_number=request.data['course_number'])
         instance.delete()
-        return Response({"message": "Instructor deleted successfully."})
+        return Response({"message": "Course deleted successfully."})
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+def departmentView(request):
+    if request.method == 'GET':
+        instance = Department.objects.all()
+        serializer = DepartmentSerializer(instance, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        instance, created = Department.objects.get_or_create(
+            dept_name=data['dept_name'])
+        for course_number in data['course_numbers']:
+            course_obj = Course.objects.get(course_number=course_number)
+            instance.courses.add(course_obj)
+        instance.save()
+        return Response(
+            {"message": f"Department {'added' if created else 'updated'} successfully."}
+        )
+    elif request.method == 'DELETE':
+        instance = Department.objects.get(
+            dept_name=request.data['dept_name'])
+        instance.delete()
+        return Response({"message": "Department deleted successfully."})

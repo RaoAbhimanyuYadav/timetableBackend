@@ -30,6 +30,8 @@ class CourseSerializer(serializers.ModelSerializer):
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
+    courses = CourseSerializer(many=True)
+
     class Meta:
         model = Department
         fields = '__all__'
