@@ -1,5 +1,6 @@
 from rest_framework.response import Response
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
 from timetable.models import Room, Instructor, MeetingTime, Course, Department, Section
 from .serializers import (
@@ -9,6 +10,7 @@ from .serializers import (
 
 
 @api_view(['GET'])
+@permission_classes([IsAdminUser])
 def getRoutes(request):
 
     routes = [
@@ -20,7 +22,9 @@ def getRoutes(request):
 
 
 @api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def roomView(request):
+    print("User : ", request.user)
     if request.method == 'GET':
         rooms = Room.objects.all()
         serializer = RoomSerializer(rooms, many=True)
@@ -38,6 +42,7 @@ def roomView(request):
 
 
 @api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def instructorView(request):
     if request.method == 'GET':
         instruc = Instructor.objects.all()
@@ -59,6 +64,7 @@ def instructorView(request):
 
 
 @api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def meetingTimeView(request):
     if request.method == 'GET':
         instance = MeetingTime.objects.all()
@@ -81,6 +87,7 @@ def meetingTimeView(request):
 
 
 @api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def courseView(request):
     if request.method == 'GET':
         instance = Course.objects.all()
@@ -107,6 +114,7 @@ def courseView(request):
 
 
 @api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def departmentView(request):
     if request.method == 'GET':
         instance = Department.objects.all()
@@ -131,6 +139,7 @@ def departmentView(request):
 
 
 @api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
 def sectionView(request):
     if request.method == 'GET':
         instance = Section.objects.all()

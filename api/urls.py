@@ -16,7 +16,7 @@ urlpatterns = [
     path("department/", views.departmentView, name='department'),
     path("section/", views.sectionView, name='section'),
 
-    path('token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('user/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('user/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
 ]
