@@ -8,3 +8,8 @@
 # to run
 
 python3 manage.py runserver
+
+# Task remaining
+
+1. Models id to be generated automatically
+2. Constraints of model to be changes from unique so that other have same name

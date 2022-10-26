@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.models import User
 
 time_slots = (
     ('9:30 - 10:30', '9:30 - 10:30'),
@@ -27,6 +27,8 @@ MUTATION_RATE = 0.1
 
 
 class Room(models.Model):
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True)
     r_number = models.CharField(max_length=6)
     seating_capacity = models.IntegerField(default=0)
 
@@ -35,6 +37,8 @@ class Room(models.Model):
 
 
 class Instructor(models.Model):
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True)
     uid = models.CharField(max_length=6)
     name = models.CharField(max_length=25)
 
@@ -43,6 +47,8 @@ class Instructor(models.Model):
 
 
 class MeetingTime(models.Model):
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True)
     pid = models.CharField(max_length=4, primary_key=True)
     time = models.CharField(
         max_length=50, choices=time_slots, default='11:30 - 12:30')
@@ -53,6 +59,8 @@ class MeetingTime(models.Model):
 
 
 class Course(models.Model):
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True)
     course_number = models.CharField(max_length=5, primary_key=True)
     course_name = models.CharField(max_length=40)
     max_numb_students = models.CharField(max_length=65)
@@ -63,6 +71,8 @@ class Course(models.Model):
 
 
 class Department(models.Model):
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True)
     dept_name = models.CharField(max_length=50)
     courses = models.ManyToManyField(Course)
 
@@ -75,6 +85,8 @@ class Department(models.Model):
 
 
 class Section(models.Model):
+    owner = models.ForeignKey(
+        User, on_delete=models.CASCADE, null=True, blank=True)
     section_id = models.CharField(max_length=25, primary_key=True)
     department = models.ForeignKey(Department, on_delete=models.CASCADE)
     num_class_in_week = models.IntegerField(default=0)
