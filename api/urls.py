@@ -9,6 +9,7 @@ from . import views
 
 urlpatterns = [
     path("", views.getRoutes, name='routes'),
+    path("register/", views.register, name='register'),
     path("room/", views.roomView, name='room'),
     path("instructor/", views.instructorView, name='instructor'),
     path("meeting-time/", views.meetingTimeView, name='meeting-time'),
@@ -16,7 +17,7 @@ urlpatterns = [
     path("department/", views.departmentView, name='department'),
     path("section/", views.sectionView, name='section'),
 
-    path('user/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('user/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('login/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 
 ]

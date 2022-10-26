@@ -2,6 +2,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, IsAdminUser
 
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.contrib.auth.models import User
+
 from timetable.models import Room, Instructor, MeetingTime, Course, Department, Section
 from .serializers import (
     RoomSerializer, InstructorSerializer, MeetingTimeSerializer, CourseSerializer,
@@ -166,3 +170,29 @@ def sectionView(request):
             section_id=request.data['section_id'])
         instance.delete()
         return Response({"message": "Section deleted successfully."})
+
+
+@api_view(['POST'])
+def register(request):
+    data = request.data
+    username = data['username'].lower()
+    try:
+        instance = User.objects.get(username=username)
+        return Response({"message": "User with this username already exists."})
+    except User.DoesNotExist:
+        instance = User.objects.create(
+            username=username,
+            password=data['password']
+        )
+        if 'email' in data:
+            instance.email = data['email']
+        if 'first_name' in data:
+            instance.first_name = data['first_name']
+        if 'last_name' in data:
+            instance.last_name = data['last_name']
+        instance.save()
+        refresh = RefreshToken.for_user(instance)
+        return Response({
+            'refresh': str(refresh),
+            'access': str(refresh.access_token),
+        })
