@@ -16,6 +16,8 @@ urlpatterns = [
     path("course/", views.courseView, name='course'),
     path("department/", views.departmentView, name='department'),
     path("section/", views.sectionView, name='section'),
+    path("generate-timetable/", views.generateTimeTableView,
+         name='generate-timetable'),
 
     path('login/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('login/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),

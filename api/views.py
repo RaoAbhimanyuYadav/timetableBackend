@@ -6,6 +6,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.models import User
 
+from timetable.genetic import timetable
+
+from timetable.models import Section
 from .serializers import (
     RoomSerializer, InstructorSerializer, MeetingTimeSerializer, CourseSerializer,
     DepartmentSerializer, SectionSerializer
@@ -206,3 +209,10 @@ def register(request):
             'refresh': str(refresh),
             'access': str(refresh.access_token),
         })
+
+
+@api_view(['GET'])
+def generateTimeTableView(request):
+    schedule = timetable(request)
+    sections = SectionSerializer(Section.objects.all(), many=True).data
+    return Response({"schedule": schedule, "sections": sections})
