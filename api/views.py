@@ -158,11 +158,6 @@ def sectionView(request):
         instance, created = Section.objects.get_or_create(
             section_id=data['section_id'], department=department)
         instance.num_class_in_week = data['num_class_in_week']
-        instance.course = Course.objects.get(
-            course_number=data['course_number'])
-        instance.meeting_time = MeetingTime.objects.get(pid=data['pid'])
-        instance.room = Room.objects.get(r_number=data['r_number'])
-        instance.instructor = Instructor.objects.get(uid=data['uid'])
         instance.save()
         return Response(
             {"message": f"Section {'added' if created else 'updated'} successfully."}
