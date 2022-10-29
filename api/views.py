@@ -122,6 +122,50 @@ def professorView(request):
         return Response({"message": "Professor deleted successfully."})
 
 
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def subjectView(request):
+    user = request.user
+    if request.method == 'GET':
+        instance = user.subject_set.all()
+        serializer = SubjectSerializer(instance, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        instance = Subject.objects.create()
+        instance.name = data['name']
+        instance.code = data['code']
+        instance.lecture_in_a_week = data['lecture_in_a_week']
+        teacher = user.professor_set.get(id=data['teacher_id'])
+        instance.teacher = teacher
+        year = user.year_set.get(id=data['year_id'])
+        instance.year = year
+        instance.owner = user
+        instance.save()
+        return Response({"message": "Subject added successfully."})
+    elif request.method == 'PUT':
+        data = request.data
+        instance = user.subject_set.get(id=data['id'])
+        if 'name' in data:
+            instance.name = data['name']
+        if 'code' in data:
+            instance.code = data['code']
+        if 'lecture_in_a_week' in data:
+            instance.lecture_in_a_week = data['lecture_in_a_week']
+        if 'teacher_id' in data:
+            teacher = user.professor_set.get(id=data['teacher_id'])
+            instance.teacher = teacher
+        if 'year_id' in data:
+            year = user.year_set.get(id=data['year_id'])
+            instance.year = year
+        instance.save()
+        return Response({"message": "Subject Updated successfully."})
+    elif request.method == 'DELETE':
+        instance = user.subject_set.get(id=request.data['id'])
+        instance.delete()
+        return Response({"message": "Subject deleted successfully."})
+
+
 @api_view(['POST'])
 def register(request):
     data = request.data

@@ -13,8 +13,7 @@ urlpatterns = [
     path("timing/", views.timingView, name='timing'),
     path("year/", views.yearView, name='year'),
     path("professor/", views.professorView, name='professor'),
-    # path("department/", views.departmentView, name='department'),
-    # path("section/", views.sectionView, name='section'),
+    path("subject/", views.subjectView, name='subject'),
     # path("generate-timetable/", views.generateTimeTableView,
     #      name='generate-timetable'),
 

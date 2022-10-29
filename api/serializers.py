@@ -22,7 +22,8 @@ class YearSerializer(serializers.ModelSerializer):
 
 
 class SubjectSerializer(serializers.ModelSerializer):
-    # instructors = InstructorSerializer(many=True)
+    teacher = ProfessorSerializer(many=False)
+    year = YearSerializer(many=False)
 
     class Meta:
         model = Subject
