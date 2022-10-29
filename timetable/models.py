@@ -40,7 +40,7 @@ class Year(models.Model):
                           primary_key=True, unique=True, editable=False)
 
     def __str__(self):
-        return f"Year:{self.semseter} & room:{self.room}"
+        return f"Year:{self.semester} & room:{self.room}"
 
 
 class Subject(models.Model):

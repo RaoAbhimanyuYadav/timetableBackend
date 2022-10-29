@@ -91,6 +91,37 @@ def yearView(request):
         return Response({"message": "Year deleted successfully."})
 
 
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def professorView(request):
+    user = request.user
+    if request.method == 'GET':
+        instance = user.professor_set.all()
+        serializer = ProfessorSerializer(instance, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        instance = Professor.objects.create()
+        instance.name = data['name']
+        instance.nick_name = data['nick_name']
+        instance.owner = user
+        instance.save()
+        return Response({"message": "Professor added successfully."})
+    elif request.method == 'PUT':
+        data = request.data
+        instance = user.professor_set.get(id=data['id'])
+        if 'name' in data:
+            instance.name = data['name']
+        if 'room' in data:
+            instance.nick_name = data['nick_name']
+        instance.save()
+        return Response({"message": "Professor Updated successfully."})
+    elif request.method == 'DELETE':
+        instance = user.professor_set.get(id=request.data['id'])
+        instance.delete()
+        return Response({"message": "Professor deleted successfully."})
+
+
 @api_view(['POST'])
 def register(request):
     data = request.data
