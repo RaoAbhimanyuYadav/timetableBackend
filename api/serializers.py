@@ -1,43 +1,29 @@
 from rest_framework import serializers
 
-from timetable.models import Room, Instructor, MeetingTime, Course, Department, Section
+from timetable.models import Timing, Professor, Year, Subject
 
 
-class RoomSerializer(serializers.ModelSerializer):
+class TimingSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Room
+        model = Timing
         fields = '__all__'
 
 
-class InstructorSerializer(serializers.ModelSerializer):
+class ProfessorSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Instructor
+        model = Professor
         fields = '__all__'
 
 
-class MeetingTimeSerializer(serializers.ModelSerializer):
+class YearSerializer(serializers.ModelSerializer):
     class Meta:
-        model = MeetingTime
+        model = Year
         fields = '__all__'
 
 
-class CourseSerializer(serializers.ModelSerializer):
-    instructors = InstructorSerializer(many=True)
+class SubjectSerializer(serializers.ModelSerializer):
+    # instructors = InstructorSerializer(many=True)
 
     class Meta:
-        model = Course
-        fields = '__all__'
-
-
-class DepartmentSerializer(serializers.ModelSerializer):
-    courses = CourseSerializer(many=True)
-
-    class Meta:
-        model = Department
-        fields = '__all__'
-
-
-class SectionSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Section
+        model = Subject
         fields = '__all__'
