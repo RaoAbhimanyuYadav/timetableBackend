@@ -60,126 +60,35 @@ def timingView(request):
         return Response({"message": "Timing deleted successfully."})
 
 
-# @api_view(['GET', 'POST', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def instructorView(request):
-#     if request.method == 'GET':
-#         instruc = Instructor.objects.all()
-#         serializer = InstructorSerializer(instruc, many=True)
-#         return Response(serializer.data)
-#     elif request.method == 'POST':
-#         data = request.data
-#         instruc, created = Instructor.objects.get_or_create(
-#             uid=data['uid'])
-#         instruc.name = data['name']
-#         instruc.save()
-#         return Response(
-#             {"message": f"Instructor {'added' if created else 'updated'} successfully."}
-#         )
-#     elif request.method == 'DELETE':
-#         instruc = Instructor.objects.get(uid=request.data['uid'])
-#         instruc.delete()
-#         return Response({"message": "Instructor deleted successfully."})
-
-
-# @api_view(['GET', 'POST', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def meetingTimeView(request):
-#     if request.method == 'GET':
-#         instance = MeetingTime.objects.all()
-#         serializer = MeetingTimeSerializer(instance, many=True)
-#         return Response(serializer.data)
-#     elif request.method == 'POST':
-#         data = request.data
-#         instance, created = MeetingTime.objects.get_or_create(
-#             pid=data['pid'])
-#         instance.time = data['time']
-#         instance.day = data['day']
-#         instance.save()
-#         return Response(
-#             {"message": f"Meeting Time {'added' if created else 'updated'} successfully."}
-#         )
-#     elif request.method == 'DELETE':
-#         instance = MeetingTime.objects.get(pid=request.data['pid'])
-#         instance.delete()
-#         return Response({"message": "Meeting Time deleted successfully."})
-
-
-# @api_view(['GET', 'POST', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def courseView(request):
-#     if request.method == 'GET':
-#         instance = Course.objects.all()
-#         serializer = CourseSerializer(instance, many=True)
-#         return Response(serializer.data)
-#     elif request.method == 'POST':
-#         data = request.data
-#         instance, created = Course.objects.get_or_create(
-#             course_number=data['course_number'])
-#         instance.course_name = data['course_name']
-#         instance.max_numb_students = data['max_numb_students']
-#         for instructor_uid in data['instructor_uids']:
-#             instructor_obj = Instructor.objects.get(uid=instructor_uid)
-#             instance.instructors.add(instructor_obj)
-#         instance.save()
-#         return Response(
-#             {"message": f"Course {'added' if created else 'updated'} successfully."}
-#         )
-#     elif request.method == 'DELETE':
-#         instance = Course.objects.get(
-#             course_number=request.data['course_number'])
-#         instance.delete()
-#         return Response({"message": "Course deleted successfully."})
-
-
-# @api_view(['GET', 'POST', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def departmentView(request):
-#     if request.method == 'GET':
-#         instance = Department.objects.all()
-#         serializer = DepartmentSerializer(instance, many=True)
-#         return Response(serializer.data)
-#     elif request.method == 'POST':
-#         data = request.data
-#         instance, created = Department.objects.get_or_create(
-#             dept_name=data['dept_name'])
-#         for course_number in data['course_numbers']:
-#             course_obj = Course.objects.get(course_number=course_number)
-#             instance.courses.add(course_obj)
-#         instance.save()
-#         return Response(
-#             {"message": f"Department {'added' if created else 'updated'} successfully."}
-#         )
-#     elif request.method == 'DELETE':
-#         instance = Department.objects.get(
-#             dept_name=request.data['dept_name'])
-#         instance.delete()
-#         return Response({"message": "Department deleted successfully."})
-
-
-# @api_view(['GET', 'POST', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def sectionView(request):
-#     if request.method == 'GET':
-#         instance = Section.objects.all()
-#         serializer = SectionSerializer(instance, many=True)
-#         return Response(serializer.data)
-#     elif request.method == 'POST':
-#         data = request.data
-#         department = Department.objects.get(
-#             dept_name=data['dept_name'])
-#         instance, created = Section.objects.get_or_create(
-#             section_id=data['section_id'], department=department)
-#         instance.num_class_in_week = data['num_class_in_week']
-#         instance.save()
-#         return Response(
-#             {"message": f"Section {'added' if created else 'updated'} successfully."}
-#         )
-#     elif request.method == 'DELETE':
-#         instance = Section.objects.get(
-#             section_id=request.data['section_id'])
-#         instance.delete()
-#         return Response({"message": "Section deleted successfully."})
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def yearView(request):
+    user = request.user
+    if request.method == 'GET':
+        instance = user.year_set.all()
+        serializer = YearSerializer(instance, many=True)
+        return Response(serializer.data)
+    elif request.method == 'POST':
+        data = request.data
+        instance = Year.objects.create()
+        instance.semester = int(data['semester'])
+        instance.room = data['room']
+        instance.owner = user
+        instance.save()
+        return Response({"message": "Year added successfully."})
+    elif request.method == 'PUT':
+        data = request.data
+        instance = user.year_set.get(id=data['id'])
+        if 'semester' in data:
+            instance.semester = int(data['semester'])
+        if 'room' in data:
+            instance.room = data['room']
+        instance.save()
+        return Response({"message": "Year Updated successfully."})
+    elif request.method == 'DELETE':
+        instance = user.year_set.get(id=request.data['id'])
+        instance.delete()
+        return Response({"message": "Year deleted successfully."})
 
 
 @api_view(['POST'])
