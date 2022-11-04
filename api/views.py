@@ -112,7 +112,7 @@ def professorView(request):
         instance = user.professor_set.get(id=data['id'])
         if 'name' in data:
             instance.name = data['name']
-        if 'room' in data:
+        if 'nick_name' in data:
             instance.nick_name = data['nick_name']
         instance.save()
         return Response({"message": "Professor Updated successfully."})

@@ -18,7 +18,8 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=250)),
                 ('nick_name', models.CharField(max_length=10, unique=True)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True)),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False,
+                 primary_key=True, serialize=False, unique=True)),
             ],
         ),
         migrations.CreateModel(
@@ -28,8 +29,10 @@ class Migration(migrations.Migration):
                 ('code', models.CharField(max_length=25)),
                 ('lecture_in_a_week', models.IntegerField(default=0)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True)),
-                ('teacher', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='timetable.professor')),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True,
+                                        serialize=False, unique=True)),
+                ('teacher', models.ForeignKey(
+                    on_delete=django.db.models.deletion.CASCADE, to='timetable.professor')),
             ],
         ),
         migrations.CreateModel(
@@ -38,7 +41,8 @@ class Migration(migrations.Migration):
                 ('day', models.CharField(max_length=10)),
                 ('time_from', models.CharField(max_length=20)),
                 ('time_to', models.CharField(max_length=20)),
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True)),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False,
+                 primary_key=True, serialize=False, unique=True)),
             ],
         ),
         migrations.CreateModel(
@@ -46,7 +50,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('room', models.CharField(max_length=25)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False, unique=True)),
+                ('id', models.UUIDField(default=uuid.uuid4, editable=False,
+                 primary_key=True, serialize=False, unique=True)),
             ],
         ),
         migrations.RemoveField(
@@ -94,6 +99,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='subject',
             name='year',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='timetable.year'),
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE, to='timetable.year'),
         ),
     ]
