@@ -32,15 +32,16 @@ def timingView(request):
     user = request.user
     if request.method == 'GET':
         instance = user.timing_set.all()
-        data = user.timing_set.values('day').distinct()
         serializer = TimingSerializer(instance, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
         data = request.data
-        instance = Timing.objects.create()
-        instance.day = data['day']
-        instance.time_from = data['time_from']
-        instance.time_to = data['time_to']
+        instance = Timing.objects.create(day=data['day'])
+        instance.start_time = data['start_time']
+        instance.end_time = data['end_time']
+        instance.skip_start_time = data['skip_start_time']
+        instance.skip_end_time = data['skip_end_time']
+        instance.one_slot_interval = data['one_slot_interval']
         instance.owner = user
         instance.save()
         return Response({"message": "Timing added successfully."})
@@ -49,10 +50,16 @@ def timingView(request):
         instance = user.timing_set.get(id=data['id'])
         if 'day' in data:
             instance.day = data['day']
-        if 'time_from' in data:
-            instance.time_from = data['time_from']
-        if 'time_to' in data:
-            instance.time_to = data['time_to']
+        if 'start_time' in data:
+            instance.start_time = data['start_time']
+        if 'end_time' in data:
+            instance.end_time = data['end_time']
+        if 'skip_start_time' in data:
+            instance.skip_start_time = data['skip_start_time']
+        if 'skip_end_time' in data:
+            instance.skip_end_time = data['skip_end_time']
+        if 'one_slot_interval' in data:
+            instance.one_slot_interval = data['one_slot_interval']
         instance.save()
         return Response({"message": "Timing Updated successfully."})
     elif request.method == 'DELETE':
@@ -137,6 +144,7 @@ def subjectView(request):
         instance.name = data['name']
         instance.code = data['code']
         instance.lecture_in_a_week = data['lecture_in_a_week']
+        instance.slot_required = data['slot_required']
         teacher = user.professor_set.get(id=data['teacher_id'])
         instance.teacher = teacher
         year = user.year_set.get(id=data['year_id'])
@@ -153,6 +161,8 @@ def subjectView(request):
             instance.code = data['code']
         if 'lecture_in_a_week' in data:
             instance.lecture_in_a_week = data['lecture_in_a_week']
+        if 'slot_required' in data:
+            instance.slot_required = data['slot_required']
         if 'teacher_id' in data:
             teacher = user.professor_set.get(id=data['teacher_id'])
             instance.teacher = teacher
@@ -198,12 +208,3 @@ def register(request):
 #     schedule = timetable(request)
 #     sections = SectionSerializer(Section.objects.all(), many=True).data
 #     return Response({"schedule": schedule, "sections": sections})
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def distinctDay(request):
-    user = request.user
-    if request.method == 'GET':
-        data = user.timing_set.values('day').distinct()
-        serializer = TimingSerializer(data, many=True)
-        return Response(serializer.data)
