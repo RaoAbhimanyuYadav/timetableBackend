@@ -78,8 +78,7 @@ def yearView(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         data = request.data
-        instance = Year.objects.create()
-        instance.semester = int(data['semester'])
+        instance = Year.objects.create(semester=int(data['semester']))
         instance.room = data['room']
         instance.owner = user
         instance.save()
@@ -109,9 +108,8 @@ def professorView(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         data = request.data
-        instance = Professor.objects.create()
+        instance = Professor.objects.create(nick_name=data['nick_name'])
         instance.name = data['name']
-        instance.nick_name = data['nick_name']
         instance.owner = user
         instance.save()
         return Response({"message": "Professor added successfully."})
@@ -140,9 +138,8 @@ def subjectView(request):
         return Response(serializer.data)
     elif request.method == 'POST':
         data = request.data
-        instance = Subject.objects.create()
+        instance = Subject.objects.create(code=data['code'])
         instance.name = data['name']
-        instance.code = data['code']
         instance.lecture_in_a_week = data['lecture_in_a_week']
         instance.slot_required = data['slot_required']
         teacher = user.professor_set.get(id=data['teacher_id'])
