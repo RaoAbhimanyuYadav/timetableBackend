@@ -32,6 +32,7 @@ def timingView(request):
     user = request.user
     if request.method == 'GET':
         instance = user.timing_set.all()
+        data = user.timing_set.values('day').distinct()
         serializer = TimingSerializer(instance, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
@@ -197,3 +198,12 @@ def register(request):
 #     schedule = timetable(request)
 #     sections = SectionSerializer(Section.objects.all(), many=True).data
 #     return Response({"schedule": schedule, "sections": sections})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def distinctDay(request):
+    user = request.user
+    if request.method == 'GET':
+        data = user.timing_set.values('day').distinct()
+        serializer = TimingSerializer(data, many=True)
+        return Response(serializer.data)

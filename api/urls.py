@@ -11,6 +11,7 @@ urlpatterns = [
     path("", views.getRoutes, name='routes'),
     path("register/", views.register, name='register'),
     path("timing/", views.timingView, name='timing'),
+    path("distinct-day/", views.distinctDay, name='distinct-day'),
     path("year/", views.yearView, name='year'),
     path("professor/", views.professorView, name='professor'),
     path("subject/", views.subjectView, name='subject'),
