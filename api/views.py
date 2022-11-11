@@ -6,11 +6,13 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.models import User
 
-from timetable.models import Timing, Professor, Year, Subject
+from timetable.models import Timing, Professor, Year, Subject, Group
 
 
 from .serializers import (
-    TimingSerializer, ProfessorSerializer, YearSerializer, SubjectSerializer
+    TimingSerializer, ProfessorSerializer,
+    YearSerializer,
+    SubjectSerializer
 )
 
 
@@ -80,6 +82,7 @@ def yearView(request):
         data = request.data
         instance = Year.objects.create(semester=int(data['semester']))
         instance.room = data['room']
+        instance.total_groups = data['total_groups']
         instance.owner = user
         instance.save()
         return Response({"message": "Year added successfully."})
@@ -90,6 +93,8 @@ def yearView(request):
             instance.semester = int(data['semester'])
         if 'room' in data:
             instance.room = data['room']
+        if 'total_groups' in data:
+            instance.total_groups = data['total_groups']
         instance.save()
         return Response({"message": "Year Updated successfully."})
     elif request.method == 'DELETE':
@@ -134,19 +139,22 @@ def subjectView(request):
     user = request.user
     if request.method == 'GET':
         instance = user.subject_set.all()
-        serializer = SubjectSerializer(instance, many=True)
+        serializer = SubjectSerializer(instance=instance, many=True)
         return Response(serializer.data)
     elif request.method == 'POST':
         data = request.data
-        instance = Subject.objects.create(code=data['code'])
-        instance.name = data['name']
-        instance.lecture_in_a_week = data['lecture_in_a_week']
-        instance.slot_required = data['slot_required']
+        instance = Subject.objects.create(code=data['code'], name=data['name'])
         teacher = user.professor_set.get(id=data['teacher_id'])
         instance.teacher = teacher
         year = user.year_set.get(id=data['year_id'])
         instance.year = year
         instance.owner = user
+        for group in data['groups']:
+            new_group = Group.objects.create(
+                owner=user, group_number=group['group_number'],
+                lecture_in_a_week=group['lecture_in_a_week'],
+                slot_required=group['slot_required'], subject=instance)
+            new_group.save()
         instance.save()
         return Response({"message": "Subject added successfully."})
     elif request.method == 'PUT':
@@ -156,10 +164,6 @@ def subjectView(request):
             instance.name = data['name']
         if 'code' in data:
             instance.code = data['code']
-        if 'lecture_in_a_week' in data:
-            instance.lecture_in_a_week = data['lecture_in_a_week']
-        if 'slot_required' in data:
-            instance.slot_required = data['slot_required']
         if 'teacher_id' in data:
             teacher = user.professor_set.get(id=data['teacher_id'])
             instance.teacher = teacher
@@ -167,6 +171,21 @@ def subjectView(request):
             year = user.year_set.get(id=data['year_id'])
             instance.year = year
         instance.save()
+        if 'groups' in data:
+            for group in data['groups']:
+                if 'id' in group:
+                    grp = Group.objects.get(id=group['id'])
+                    grp.lecture_in_a_week = group['lecture_in_a_week']
+                    grp.slot_required = group['slot_required']
+                    grp.group_number = group['group_number']
+                    grp.save()
+                else:
+                    grp = Group.objects.create(
+                        owner=user, group_number=group['group_number'],
+                        lecture_in_a_week=group['lecture_in_a_week'],
+                        slot_required=group['slot_required'],
+                        subject=instance)
+                    grp.save()
         return Response({"message": "Subject Updated successfully."})
     elif request.method == 'DELETE':
         instance = user.subject_set.get(id=request.data['id'])

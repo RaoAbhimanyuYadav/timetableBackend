@@ -68,13 +68,14 @@ class Group(models.Model):
 
     lecture_in_a_week = models.IntegerField(default=1)
     slot_required = models.IntegerField(default=1)
-    group_number = models.ForeignKey(
+    group_number = models.IntegerField(default=1)
+    subject = models.ForeignKey(
         Subject, on_delete=models.CASCADE, blank=True, null=True)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
 
     def __str__(self):
-        return f"{self.name} ({self.code})"
+        return f"{self.group_number}"
 # Group Number = 0 => Whole class
 # Group Number = 1 => G1
 # Group Number = 2 => G2
