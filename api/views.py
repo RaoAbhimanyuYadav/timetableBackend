@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.models import User
 
-from timetable.models import Timing, Professor, Year, Subject, Group
+from timetable.models import Timing, Professor, Year, Subject
 
 
 from .serializers import (
@@ -149,12 +149,9 @@ def subjectView(request):
         year = user.year_set.get(id=data['year_id'])
         instance.year = year
         instance.owner = user
-        for group in data['groups']:
-            new_group = Group.objects.create(
-                owner=user, group_number=group['group_number'],
-                lecture_in_a_week=group['lecture_in_a_week'],
-                slot_required=group['slot_required'], subject=instance)
-            new_group.save()
+        instance.group_lecture_in_a_week = data['group_lecture_in_a_week']
+        instance.whole_lecture_in_a_week = data['whole_lecture_in_a_week']
+        instance.slot_required = data['slot_required']
         instance.save()
         return Response({"message": "Subject added successfully."})
     elif request.method == 'PUT':
@@ -170,22 +167,14 @@ def subjectView(request):
         if 'year_id' in data:
             year = user.year_set.get(id=data['year_id'])
             instance.year = year
+        if 'group_lecture_in_a_week' in data:
+            instance.group_lecture_in_a_week = data['group_lecture_in_a_week']
+        if 'whole_lecture_in_a_week' in data:
+            instance.whole_lecture_in_a_week = data['whole_lecture_in_a_week']
+        if 'slot_required' in data:
+            instance.slot_required = data['slot_required']
         instance.save()
-        if 'groups' in data:
-            for group in data['groups']:
-                if 'id' in group:
-                    grp = Group.objects.get(id=group['id'])
-                    grp.lecture_in_a_week = group['lecture_in_a_week']
-                    grp.slot_required = group['slot_required']
-                    grp.group_number = group['group_number']
-                    grp.save()
-                else:
-                    grp = Group.objects.create(
-                        owner=user, group_number=group['group_number'],
-                        lecture_in_a_week=group['lecture_in_a_week'],
-                        slot_required=group['slot_required'],
-                        subject=instance)
-                    grp.save()
+
         return Response({"message": "Subject Updated successfully."})
     elif request.method == 'DELETE':
         instance = user.subject_set.get(id=request.data['id'])
