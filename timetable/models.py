@@ -7,7 +7,7 @@ import uuid
 class Timing(models.Model):
     owner = models.ForeignKey(
         User, blank=True, null=True, on_delete=models.CASCADE)
-    day = models.CharField(max_length=10, unique=True)
+    day = models.CharField(max_length=10)
     start_time = models.TimeField(blank=True, null=True)
     end_time = models.TimeField(blank=True, null=True)
     skip_start_time = models.TimeField(blank=True, null=True)
@@ -15,6 +15,9 @@ class Timing(models.Model):
     one_slot_interval = models.TimeField(blank=True, null=True)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'day',)
 
     def __str__(self):
         return f"On {self.day}"
@@ -24,9 +27,12 @@ class Professor(models.Model):
     owner = models.ForeignKey(
         User, blank=True, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=250, blank=True, null=True)
-    nick_name = models.CharField(max_length=10, unique=True)
+    nick_name = models.CharField(max_length=10)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'nick_name',)
 
     def __str__(self):
         return f"{self.name} ({self.nick_name})"
@@ -35,11 +41,14 @@ class Professor(models.Model):
 class Year(models.Model):
     owner = models.ForeignKey(
         User, blank=True, null=True, on_delete=models.CASCADE)
-    semester = models.IntegerField(unique=True)
+    semester = models.IntegerField()
     room = models.CharField(max_length=25, blank=True, null=True)
     total_groups = models.IntegerField(default=1)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'semester',)
 
     def __str__(self):
         return f"Year:{self.semester} & room:{self.room}"
@@ -49,7 +58,7 @@ class Subject(models.Model):
     owner = models.ForeignKey(
         User, blank=True, null=True, on_delete=models.CASCADE)
     name = models.CharField(max_length=250, blank=True, null=True)
-    code = models.CharField(max_length=25, unique=True)
+    code = models.CharField(max_length=25)
     slot_required = models.IntegerField(default=1)
     group_lecture_in_a_week = models.IntegerField(default=0)
     whole_lecture_in_a_week = models.IntegerField(default=1)
@@ -60,6 +69,9 @@ class Subject(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'code',)
 
     def __str__(self):
         return f"{self.name} ({self.code})"
