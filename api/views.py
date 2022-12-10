@@ -81,7 +81,6 @@ def yearView(request):
     elif request.method == 'POST':
         data = request.data
         instance = Year.objects.create(semester=int(data['semester']))
-        instance.room = data['room']
         instance.total_groups = data['total_groups']
         instance.owner = user
         instance.save()
@@ -91,8 +90,6 @@ def yearView(request):
         instance = user.year_set.get(id=data['id'])
         if 'semester' in data:
             instance.semester = int(data['semester'])
-        if 'room' in data:
-            instance.room = data['room']
         if 'total_groups' in data:
             instance.total_groups = data['total_groups']
         instance.save()
@@ -150,6 +147,7 @@ def subjectView(request):
         instance.year = year
         instance.owner = user
         instance.group_lecture_in_a_week = data['group_lecture_in_a_week']
+        instance.group_lecture_in_a_week = data['room']
         instance.whole_lecture_in_a_week = data['whole_lecture_in_a_week']
         instance.slot_required = data['slot_required']
         instance.save()
@@ -169,6 +167,8 @@ def subjectView(request):
             instance.year = year
         if 'group_lecture_in_a_week' in data:
             instance.group_lecture_in_a_week = data['group_lecture_in_a_week']
+        if 'room' in data:
+            instance.room = data['room']
         if 'whole_lecture_in_a_week' in data:
             instance.whole_lecture_in_a_week = data['whole_lecture_in_a_week']
         if 'slot_required' in data:

@@ -42,7 +42,6 @@ class Year(models.Model):
     owner = models.ForeignKey(
         User, blank=True, null=True, on_delete=models.CASCADE)
     semester = models.IntegerField()
-    room = models.CharField(max_length=25, blank=True, null=True)
     total_groups = models.IntegerField(default=1)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
@@ -51,7 +50,7 @@ class Year(models.Model):
         unique_together = ('owner', 'semester',)
 
     def __str__(self):
-        return f"Year:{self.semester} & room:{self.room}"
+        return f"Year:{self.semester} & total Group:{self.total_groups}"
 
 
 class Subject(models.Model):
@@ -66,6 +65,7 @@ class Subject(models.Model):
         Professor, on_delete=models.CASCADE, blank=True, null=True)
     year = models.ForeignKey(
         Year, on_delete=models.CASCADE, blank=True, null=True)
+    room = models.CharField(max_length=25, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
