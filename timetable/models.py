@@ -4,68 +4,41 @@ from django.contrib.auth.models import User
 import uuid
 
 
-class Timing(models.Model):
-    owner = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.CASCADE)
-    day = models.CharField(max_length=10)
-    start_time = models.TimeField(blank=True, null=True)
-    end_time = models.TimeField(blank=True, null=True)
-    skip_start_time = models.TimeField(blank=True, null=True)
-    skip_end_time = models.TimeField(blank=True, null=True)
-    one_slot_interval = models.TimeField(blank=True, null=True)
+class Bell_Timing(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=10)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
 
     class Meta:
-        unique_together = ('owner', 'day',)
+        unique_together = ('owner', 'start_time', 'end_time')
 
     def __str__(self):
-        return f"On {self.day}"
+        return f"On {self.start_time} - {self.end_time}"
 
 
-class Professor(models.Model):
-    owner = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.CASCADE)
-    name = models.CharField(max_length=250, blank=True, null=True)
-    nick_name = models.CharField(max_length=10)
+class Working_Day(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=10)
+    code = models.CharField(max_length=10)
+    created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
 
     class Meta:
-        unique_together = ('owner', 'nick_name',)
+        unique_together = ('owner', 'name',)
 
     def __str__(self):
-        return f"{self.name} ({self.nick_name})"
-
-
-class Year(models.Model):
-    owner = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.CASCADE)
-    semester = models.IntegerField()
-    total_groups = models.IntegerField(default=1)
-    id = models.UUIDField(default=uuid.uuid4,
-                          primary_key=True, unique=True, editable=False)
-
-    class Meta:
-        unique_together = ('owner', 'semester',)
-
-    def __str__(self):
-        return f"Year:{self.semester} & total Group:{self.total_groups}"
+        return f"On {self.name}"
 
 
 class Subject(models.Model):
-    owner = models.ForeignKey(
-        User, blank=True, null=True, on_delete=models.CASCADE)
-    name = models.CharField(max_length=250, blank=True, null=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
     code = models.CharField(max_length=25)
-    slot_required = models.IntegerField(default=1)
-    group_lecture_in_a_week = models.IntegerField(default=0)
-    whole_lecture_in_a_week = models.IntegerField(default=1)
-    teacher = models.ForeignKey(
-        Professor, on_delete=models.CASCADE, blank=True, null=True)
-    year = models.ForeignKey(
-        Year, on_delete=models.CASCADE, blank=True, null=True)
-    room = models.CharField(max_length=25, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(default=uuid.uuid4,
                           primary_key=True, unique=True, editable=False)
@@ -77,20 +50,153 @@ class Subject(models.Model):
         return f"{self.name} ({self.code})"
 
 
-# class Group(models.Model):
-#     owner = models.ForeignKey(
-#         User, blank=True, null=True, on_delete=models.CASCADE)
+class Subject_Time_Off(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    bell_timing_id = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
+    working_day_id = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
 
-#     lecture_in_a_week = models.IntegerField(default=1)
-#     slot_required = models.IntegerField(default=1)
-#     group_number = models.IntegerField(default=1)
-#     subject = models.ForeignKey(
-#         Subject, on_delete=models.CASCADE, blank=True, null=True)
-#     id = models.UUIDField(default=uuid.uuid4,
-#                           primary_key=True, unique=True, editable=False)
+    class Meta:
+        unique_together = ('owner', 'subject_id',
+                           'bell_timing_id', 'working_day_id')
 
-#     def __str__(self):
-#         return f"{self.group_number}"
-# Group Number = 0 => Whole class
-# Group Number = 1 => G1
-# Group Number = 2 => G2
+    def __str__(self):
+        return f"{self.subject_id}"
+
+
+class Semester(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    code = models.CharField(max_length=25)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'code',)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class Semester_Group(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    semester_id = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    code = models.CharField(max_length=25)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'code', 'semester_id')
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class Semester_Time_Off(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    semester_id = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    bell_timing_id = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
+    working_day_id = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'semester_id',
+                           'bell_timing_id', 'working_day_id')
+
+    def __str__(self):
+        return f"{self.semester_id}"
+
+
+class Classroom(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    code = models.CharField(max_length=25)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'code',)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class Classroom_Time_Off(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    classroom_id = models.ForeignKey(Classroom, on_delete=models.CASCADE)
+    bell_timing_id = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
+    working_day_id = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'classroom_id',
+                           'bell_timing_id', 'working_day_id')
+
+    def __str__(self):
+        return f"{self.classroom_id}"
+
+
+class Teacher(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    code = models.CharField(max_length=25)
+    color = models.CharField(max_length=25)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'code',)
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class Teacher_Time_Off(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    bell_timing_id = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
+    working_day_id = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'teacher_id',
+                           'bell_timing_id', 'working_day_id')
+
+    def __str__(self):
+        return f"{self.teacher_id}"
+
+
+class Lesson(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    classroom_id = models.ForeignKey(Classroom, on_delete=models.CASCADE)
+    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    semester_id = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    semester_group_id = models.ForeignKey(
+        Semester_Group, on_delete=models.CASCADE)
+    lesson_per_week = models.IntegerField(default=1)
+    is_lab = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(default=uuid.uuid4,
+                          primary_key=True, unique=True, editable=False)
+
+    class Meta:
+        unique_together = ('owner', 'lesson_per_week', 'classroom_id',
+                           'subject_id', 'semester_id', 'semester_group_id')
+
+    def __str__(self):
+        return f"{self.lesson_per_week} "
