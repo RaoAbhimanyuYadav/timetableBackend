@@ -6,180 +6,32 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.models import User
 
-from timetable.models import Timing, Professor, Year, Subject
-
+from timetable.models import (
+    Bell_Timing, Working_Day, Lesson,
+    Subject, Subject_Time_Off,
+    Semester, Semester_Group, Semester_Time_Off,
+    Classroom, Classroom_Time_Off,
+    Teacher, Teacher_Time_Off, )
 
 from .serializers import (
-    TimingSerializer, ProfessorSerializer,
-    YearSerializer,
-    SubjectSerializer
+    BellTimingSerializer,
+    WorkingDaySerializer,
+    SubjectSerializer,
+    SemesterSerializer,
+    ClassroomSerializer,
+    TeacherSerializer
 )
 
+from .functions import get_handler, set_handler
 
-@api_view(['GET'])
-@permission_classes([IsAdminUser])
-def getRoutes(request):
-
-    routes = [
-        {"GET", "/api/v1/"},
-        {"GET", "/api/v1/rooms"},
-    ]
-
-    return Response(routes)
-
-
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def timingView(request):
-    user = request.user
-    if request.method == 'GET':
-        instance = user.timing_set.all()
-        serializer = TimingSerializer(instance, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        data = request.data
-        instance = Timing.objects.create(day=data['day'])
-        instance.start_time = data['start_time']
-        instance.end_time = data['end_time']
-        instance.skip_start_time = data['skip_start_time']
-        instance.skip_end_time = data['skip_end_time']
-        instance.one_slot_interval = data['one_slot_interval']
-        instance.owner = user
-        instance.save()
-        return Response({"message": "Timing added successfully."})
-    elif request.method == 'PUT':
-        data = request.data
-        instance = user.timing_set.get(id=data['id'])
-        if 'day' in data:
-            instance.day = data['day']
-        if 'start_time' in data:
-            instance.start_time = data['start_time']
-        if 'end_time' in data:
-            instance.end_time = data['end_time']
-        if 'skip_start_time' in data:
-            instance.skip_start_time = data['skip_start_time']
-        if 'skip_end_time' in data:
-            instance.skip_end_time = data['skip_end_time']
-        if 'one_slot_interval' in data:
-            instance.one_slot_interval = data['one_slot_interval']
-        instance.save()
-        return Response({"message": "Timing Updated successfully."})
-    elif request.method == 'DELETE':
-        instance = user.timing_set.get(id=request.data['id'])
-        instance.delete()
-        return Response({"message": "Timing deleted successfully."})
-
-
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def yearView(request):
-    user = request.user
-    if request.method == 'GET':
-        instance = user.year_set.all()
-        serializer = YearSerializer(instance, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        data = request.data
-        instance = Year.objects.create(semester=int(data['semester']))
-        instance.total_groups = data['total_groups']
-        instance.owner = user
-        instance.save()
-        return Response({"message": "Year added successfully."})
-    elif request.method == 'PUT':
-        data = request.data
-        instance = user.year_set.get(id=data['id'])
-        if 'semester' in data:
-            instance.semester = int(data['semester'])
-        if 'total_groups' in data:
-            instance.total_groups = data['total_groups']
-        instance.save()
-        return Response({"message": "Year Updated successfully."})
-    elif request.method == 'DELETE':
-        instance = user.year_set.get(id=request.data['id'])
-        instance.delete()
-        return Response({"message": "Year deleted successfully."})
-
-
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def professorView(request):
-    user = request.user
-    if request.method == 'GET':
-        instance = user.professor_set.all()
-        serializer = ProfessorSerializer(instance, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        data = request.data
-        instance = Professor.objects.create(nick_name=data['nick_name'])
-        instance.name = data['name']
-        instance.owner = user
-        instance.save()
-        return Response({"message": "Professor added successfully."})
-    elif request.method == 'PUT':
-        data = request.data
-        instance = user.professor_set.get(id=data['id'])
-        if 'name' in data:
-            instance.name = data['name']
-        if 'nick_name' in data:
-            instance.nick_name = data['nick_name']
-        instance.save()
-        return Response({"message": "Professor Updated successfully."})
-    elif request.method == 'DELETE':
-        instance = user.professor_set.get(id=request.data['id'])
-        instance.delete()
-        return Response({"message": "Professor deleted successfully."})
-
-
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def subjectView(request):
-    user = request.user
-    if request.method == 'GET':
-        instance = user.subject_set.all()
-        serializer = SubjectSerializer(instance=instance, many=True)
-        return Response(serializer.data)
-    elif request.method == 'POST':
-        data = request.data
-        instance = Subject.objects.create(code=data['code'], name=data['name'])
-        teacher = user.professor_set.get(id=data['teacher_id'])
-        instance.teacher = teacher
-        year = user.year_set.get(id=data['year_id'])
-        instance.year = year
-        instance.owner = user
-        instance.group_lecture_in_a_week = data['group_lecture_in_a_week']
-        instance.group_lecture_in_a_week = data['room']
-        instance.whole_lecture_in_a_week = data['whole_lecture_in_a_week']
-        instance.slot_required = data['slot_required']
-        instance.save()
-        return Response({"message": "Subject added successfully."})
-    elif request.method == 'PUT':
-        data = request.data
-        instance = user.subject_set.get(id=data['id'])
-        if 'name' in data:
-            instance.name = data['name']
-        if 'code' in data:
-            instance.code = data['code']
-        if 'teacher_id' in data:
-            teacher = user.professor_set.get(id=data['teacher_id'])
-            instance.teacher = teacher
-        if 'year_id' in data:
-            year = user.year_set.get(id=data['year_id'])
-            instance.year = year
-        if 'group_lecture_in_a_week' in data:
-            instance.group_lecture_in_a_week = data['group_lecture_in_a_week']
-        if 'room' in data:
-            instance.room = data['room']
-        if 'whole_lecture_in_a_week' in data:
-            instance.whole_lecture_in_a_week = data['whole_lecture_in_a_week']
-        if 'slot_required' in data:
-            instance.slot_required = data['slot_required']
-        instance.save()
-
-        return Response({"message": "Subject Updated successfully."})
-    elif request.method == 'DELETE':
-        instance = user.subject_set.get(id=request.data['id'])
-        instance.delete()
-        return Response({"message": "Subject deleted successfully."})
+# @api_view(['GET'])
+# @permission_classes([IsAdminUser])
+# def getRoutes(request):
+#     routes = [
+#         {"GET", "/api/v1/"},
+#         {"GET", "/api/v1/rooms"},
+#     ]
+#     return Response(routes)
 
 
 @api_view(['POST'])
@@ -208,8 +60,95 @@ def register(request):
         })
 
 
-# @api_view(['GET'])
-# def generateTimeTableView(request):
-#     schedule = timetable(request)
-#     sections = SectionSerializer(Section.objects.all(), many=True).data
-#     return Response({"schedule": schedule, "sections": sections})
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def bellTimingView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(get_handler(user.bell_timing_set, BellTimingSerializer))
+    elif request.method == 'POST':
+        data = request.data
+        set_handler(Bell_Timing, user, data, [
+                    'name', 'start_time', 'end_time'])
+        return Response({"message": "Bell Timing added successfully."})
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def workingDayView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(get_handler(user.working_day_set, WorkingDaySerializer))
+    elif request.method == 'POST':
+        data = request.data
+        set_handler(Working_Day, user, data, ['name', 'code'])
+        return Response({"message": "Working Day added successfully."})
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def subjectView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(get_handler(user.subject_set, SubjectSerializer))
+    elif request.method == 'POST':
+        data = request.data
+        SubjectSerializer().create(data, user)
+        return Response({"message": "Subject added successfully."})
+    # elif request.method == 'PUT':
+    #     data = request.data
+    #     instance = user.timing_set.get(id=data['id'])
+    #     if 'day' in data:
+    #         instance.day = data['day']
+    #     if 'start_time' in data:
+    #         instance.start_time = data['start_time']
+    #     if 'end_time' in data:
+    #         instance.end_time = data['end_time']
+    #     if 'skip_start_time' in data:
+    #         instance.skip_start_time = data['skip_start_time']
+    #     if 'skip_end_time' in data:
+    #         instance.skip_end_time = data['skip_end_time']
+    #     if 'one_slot_interval' in data:
+    #         instance.one_slot_interval = data['one_slot_interval']
+    #     instance.save()
+    #     return Response({"message": "Timing Updated successfully."})
+    # elif request.method == 'DELETE':
+    #     instance = user.timing_set.get(id=request.data['id'])
+    #     instance.delete()
+    #     return Response({"message": "Timing deleted successfully."})
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def semesterView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(get_handler(user.semester_set, SemesterSerializer))
+    elif request.method == 'POST':
+        data = request.data
+        SemesterSerializer().create(data, user)
+        return Response({"message": "Semester added successfully."})
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def classroomView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(get_handler(user.classroom_set, ClassroomSerializer))
+    elif request.method == 'POST':
+        data = request.data
+        ClassroomSerializer().create(data, user)
+        return Response({"message": "Classroom added successfully."})
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def teacherView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(get_handler(user.teacher_set, TeacherSerializer))
+    elif request.method == 'POST':
+        data = request.data
+        TeacherSerializer().create(data, user)
+        return Response({"message": "Teacher added successfully."})
