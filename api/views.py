@@ -1,6 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, IsAdminUser
+from rest_framework.permissions import IsAuthenticated
 
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -22,16 +22,11 @@ from .serializers import (
     TeacherSerializer
 )
 
-from .functions import get_handler, set_handler
+from .functions import get_handler, set_handler, delete_handler
 
-# @api_view(['GET'])
+
+# from rest_framework.permissions import  IsAdminUser
 # @permission_classes([IsAdminUser])
-# def getRoutes(request):
-#     routes = [
-#         {"GET", "/api/v1/"},
-#         {"GET", "/api/v1/rooms"},
-#     ]
-#     return Response(routes)
 
 
 @api_view(['POST'])
@@ -65,36 +60,22 @@ def register(request):
 def bellTimingView(request):
     user = request.user
     if request.method == 'GET':
-        return Response(get_handler(user.bell_timing_set, BellTimingSerializer))
-    elif request.method == 'POST':
-        data = request.data
-        set_handler(Bell_Timing, user, data, [
-                    'name', 'start_time', 'end_time'])
-        return Response({"message": "Bell Timing added successfully."})
-
-
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def workingDayView(request):
-    user = request.user
-    if request.method == 'GET':
-        return Response(get_handler(user.working_day_set, WorkingDaySerializer))
-    elif request.method == 'POST':
-        data = request.data
-        set_handler(Working_Day, user, data, ['name', 'code'])
-        return Response({"message": "Working Day added successfully."})
-
-
-@api_view(['GET', 'POST', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
-def subjectView(request):
-    user = request.user
-    if request.method == 'GET':
-        return Response(get_handler(user.subject_set, SubjectSerializer))
-    elif request.method == 'POST':
-        data = request.data
-        SubjectSerializer().create(data, user)
-        return Response({"message": "Subject added successfully."})
+        return Response(
+            get_handler(
+                user.bell_timing_set, BellTimingSerializer, 'Bell Timing'
+            ))
+    if request.method == 'POST':
+        return Response(
+            set_handler(
+                Bell_Timing, user, request.data,
+                ['name', 'start_time', 'end_time'],
+                BellTimingSerializer, 'Bell Timing'
+            ))
+    if request.method == 'DELETE':
+        return Response(
+            delete_handler(
+                user.bell_timing_set, request, 'Bell Timing'
+            ))
     # elif request.method == 'PUT':
     #     data = request.data
     #     instance = user.timing_set.get(id=data['id'])
@@ -112,10 +93,50 @@ def subjectView(request):
     #         instance.one_slot_interval = data['one_slot_interval']
     #     instance.save()
     #     return Response({"message": "Timing Updated successfully."})
-    # elif request.method == 'DELETE':
-    #     instance = user.timing_set.get(id=request.data['id'])
-    #     instance.delete()
-    #     return Response({"message": "Timing deleted successfully."})
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def workingDayView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(
+            get_handler(
+                user.working_day_set, WorkingDaySerializer, "Working Day"
+            ))
+    if request.method == 'POST':
+        return Response(
+            set_handler(
+                Working_Day, user, request.data,
+                ['name', 'code'],
+                WorkingDaySerializer, "Working Day"
+            ))
+    if request.method == 'DELETE':
+        return Response(
+            delete_handler(
+                user.working_day_set, request, 'Working Day'
+            ))
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def subjectView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(
+            get_handler(
+                user.subject_set, SubjectSerializer, "Subject"
+            ))
+    if request.method == 'POST':
+        return Response({
+            "message": "Subject added successfully.",
+            "data": SubjectSerializer().create(request.data, user)
+        })
+    if request.method == 'DELETE':
+        return Response(
+            delete_handler(
+                user.subject_set, request, 'Subject'
+            ))
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -123,11 +144,20 @@ def subjectView(request):
 def semesterView(request):
     user = request.user
     if request.method == 'GET':
-        return Response(get_handler(user.semester_set, SemesterSerializer))
-    elif request.method == 'POST':
-        data = request.data
-        SemesterSerializer().create(data, user)
-        return Response({"message": "Semester added successfully."})
+        return Response(
+            get_handler(
+                user.semester_set, SemesterSerializer, 'Semester'
+            ))
+    if request.method == 'POST':
+        return Response({
+            "message": "Semester added successfully.",
+            "data": SemesterSerializer().create(request.data, user)
+        })
+    if request.method == 'DELETE':
+        return Response(
+            delete_handler(
+                user.semester_set, request, 'Semester'
+            ))
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -135,11 +165,20 @@ def semesterView(request):
 def classroomView(request):
     user = request.user
     if request.method == 'GET':
-        return Response(get_handler(user.classroom_set, ClassroomSerializer))
-    elif request.method == 'POST':
-        data = request.data
-        ClassroomSerializer().create(data, user)
-        return Response({"message": "Classroom added successfully."})
+        return Response(
+            get_handler(
+                user.classroom_set, ClassroomSerializer, "Classroom"
+            ))
+    if request.method == 'POST':
+        return Response({
+            "message": "Classroom added successfully.",
+            "data": ClassroomSerializer().create(request.data, user)
+        })
+    if request.method == 'DELETE':
+        return Response(
+            delete_handler(
+                user.classroom_set, request, 'Classroom'
+            ))
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -147,8 +186,17 @@ def classroomView(request):
 def teacherView(request):
     user = request.user
     if request.method == 'GET':
-        return Response(get_handler(user.teacher_set, TeacherSerializer))
-    elif request.method == 'POST':
-        data = request.data
-        TeacherSerializer().create(data, user)
-        return Response({"message": "Teacher added successfully."})
+        return Response(
+            get_handler(
+                user.teacher_set, TeacherSerializer, 'Teacher'
+            ))
+    if request.method == 'POST':
+        return Response({
+            "message": "Teacher added successfully.",
+            "data": TeacherSerializer().create(request.data, user)
+        })
+    if request.method == 'DELETE':
+        return Response(
+            delete_handler(
+                user.teacher_set, request, 'Teacher'
+            ))

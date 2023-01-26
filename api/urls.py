@@ -9,7 +9,6 @@ from . import views
 
 
 urlpatterns = [
-    # path("", views.getRoutes, name='routes'),
     path("register/", views.register, name='register'),
 
     path("belltiming/", views.bellTimingView, name='belltiming'),
