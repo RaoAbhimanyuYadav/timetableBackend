@@ -242,7 +242,7 @@ class TeacherSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data, user):
         instance.name = validated_data.get('name', instance.name)
         instance.code = validated_data.get('code', instance.code)
-        instance.color = validated_data.get('code', instance.color)
+        instance.color = validated_data.get('color', instance.color)
         instance.save()
 
         new_data = validated_data.get('teacher_time_off_set', [])
