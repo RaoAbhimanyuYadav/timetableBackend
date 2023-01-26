@@ -59,17 +59,17 @@ class SubjectSerializer(serializers.ModelSerializer):
     def create(self, validated_data, user):
         instance = set_handler_with_time_off(
             Subject, user, validated_data, ['name', 'code'])
-        serialized = SubjectSerializer(instance, many=False).data
-        serialized['subject_time_off_set'] = []
+
         for data in validated_data['subject_time_off_set']:
-            time_off_instance = SubjectTimeOffSerializer().create(data, instance, user)
-            serialized['subject_time_off_set'].append(
-                SubjectTimeOffSerializer(time_off_instance, many=False).data)
-        return serialized
+            SubjectTimeOffSerializer().create(data, instance, user)
+
+        return SubjectSerializer(instance, many=False).data
 
     def update(self, instance, validated_data, user):
         instance.name = validated_data.get('name', instance.name)
         instance.code = validated_data.get('code', instance.code)
+        instance.save()
+
         new_data = validated_data.get('subject_time_off_set', [])
         old = instance.subject_time_off_set.all()
         old_data = SubjectTimeOffSerializer(old, many=True).data
@@ -120,25 +120,20 @@ class SemesterSerializer(serializers.ModelSerializer):
     def create(self, validated_data, user):
         instance = set_handler_with_time_off(
             Semester, user, validated_data, ['name', 'code'])
-        serialized = SemesterSerializer(instance, many=False).data
-        serialized['semester_time_off_set'] = []
-        for data in validated_data['semester_time_off_set']:
-            time_off_instance = SemesterTimeOffSerializer().create(data, instance, user)
-            serialized['semester_time_off_set'].append(
-                SemesterTimeOffSerializer(time_off_instance, many=False).data
-            )
-        serialized['semester_group_set'] = []
-        for data in validated_data['semester_group_set']:
-            sem_grp_instance = SemesterGroupSerializer().create(data, instance, user)
-            serialized['semester_group_set'].append(
-                SemesterGroupSerializer(sem_grp_instance, many=False).data
-            )
 
-        return serialized
+        for data in validated_data['semester_time_off_set']:
+            SemesterTimeOffSerializer().create(data, instance, user)
+
+        for data in validated_data['semester_group_set']:
+            SemesterGroupSerializer().create(data, instance, user)
+
+        return SemesterSerializer(instance, many=False).data
 
     def update(self, instance, validated_data, user):
         instance.name = validated_data.get('name', instance.name)
         instance.code = validated_data.get('code', instance.code)
+        instance.save()
+
         new_time_data = validated_data.get('semester_time_off_set', [])
         new_grp_data = validated_data.get('semester_group_set', [])
         old_time = instance.semester_time_off_set.all()
@@ -189,17 +184,17 @@ class ClassroomSerializer(serializers.ModelSerializer):
     def create(self, validated_data, user):
         instance = set_handler_with_time_off(
             Classroom, user, validated_data, ['name', 'code'])
-        serialized = ClassroomSerializer(instance, many=False).data
-        serialized['classroom_time_off_set'] = []
+
         for data in validated_data['classroom_time_off_set']:
-            time_off_instance = ClassroomTimeOffSerializer().create(data, instance, user)
-            serialized['classroom_time_off_set'].append(
-                ClassroomTimeOffSerializer(time_off_instance, many=False).data)
-        return serialized
+            ClassroomTimeOffSerializer().create(data, instance, user)
+
+        return ClassroomSerializer(instance, many=False).data
 
     def update(self, instance, validated_data, user):
         instance.name = validated_data.get('name', instance.name)
         instance.code = validated_data.get('code', instance.code)
+        instance.save()
+
         new_data = validated_data.get('classroom_time_off_set', [])
         old = instance.classroom_time_off_set.all()
         old_data = ClassroomTimeOffSerializer(old, many=True).data
@@ -238,18 +233,18 @@ class TeacherSerializer(serializers.ModelSerializer):
     def create(self, validated_data, user):
         instance = set_handler_with_time_off(
             Teacher, user, validated_data, ['name', 'code', 'color'])
-        serialized = TeacherSerializer(instance, many=False).data
-        serialized['teacher_time_off_set'] = []
+
         for data in validated_data['teacher_time_off_set']:
-            time_off_instance = TeacherTimeOffSerializer().create(data, instance, user)
-            serialized['teacher_time_off_set'].append(
-                TeacherTimeOffSerializer(time_off_instance, many=False).data)
-        return serialized
+            TeacherTimeOffSerializer().create(data, instance, user)
+
+        return TeacherSerializer(instance, many=False).data
 
     def update(self, instance, validated_data, user):
         instance.name = validated_data.get('name', instance.name)
         instance.code = validated_data.get('code', instance.code)
         instance.color = validated_data.get('code', instance.color)
+        instance.save()
+
         new_data = validated_data.get('teacher_time_off_set', [])
         old = instance.teacher_time_off_set.all()
         old_data = TeacherTimeOffSerializer(old, many=True).data
