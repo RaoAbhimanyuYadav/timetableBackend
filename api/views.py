@@ -6,12 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.models import User
 
-from timetable.models import (
-    Bell_Timing, Working_Day, Lesson,
-    Subject, Subject_Time_Off,
-    Semester, Semester_Group, Semester_Time_Off,
-    Classroom, Classroom_Time_Off,
-    Teacher, Teacher_Time_Off, )
+from timetable.models import Bell_Timing, Working_Day
 
 from .serializers import (
     BellTimingSerializer,
@@ -76,23 +71,12 @@ def bellTimingView(request):
             delete_handler(
                 user.bell_timing_set, request, 'Bell Timing'
             ))
-    # elif request.method == 'PUT':
-    #     data = request.data
-    #     instance = user.timing_set.get(id=data['id'])
-    #     if 'day' in data:
-    #         instance.day = data['day']
-    #     if 'start_time' in data:
-    #         instance.start_time = data['start_time']
-    #     if 'end_time' in data:
-    #         instance.end_time = data['end_time']
-    #     if 'skip_start_time' in data:
-    #         instance.skip_start_time = data['skip_start_time']
-    #     if 'skip_end_time' in data:
-    #         instance.skip_end_time = data['skip_end_time']
-    #     if 'one_slot_interval' in data:
-    #         instance.one_slot_interval = data['one_slot_interval']
-    #     instance.save()
-    #     return Response({"message": "Timing Updated successfully."})
+    if request.method == 'PUT':
+        instance = user.bell_timing_set.get(id=request.data['id'])
+        return Response({
+            "message": "Bell Timing Updated successfully.",
+            "data": BellTimingSerializer().update(instance, request.data)
+        })
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -116,6 +100,12 @@ def workingDayView(request):
             delete_handler(
                 user.working_day_set, request, 'Working Day'
             ))
+    if request.method == 'PUT':
+        instance = user.working_day_set.get(id=request.data['id'])
+        return Response({
+            "message": "Working Day Updated successfully.",
+            "data": WorkingDaySerializer().update(instance, request.data)
+        })
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -137,6 +127,12 @@ def subjectView(request):
             delete_handler(
                 user.subject_set, request, 'Subject'
             ))
+    if request.method == 'PUT':
+        instance = user.subject_set.get(id=request.data['id'])
+        return Response({
+            "message": "Subject Updated successfully.",
+            "data": SubjectSerializer().update(instance, request.data, user)
+        })
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -158,6 +154,12 @@ def semesterView(request):
             delete_handler(
                 user.semester_set, request, 'Semester'
             ))
+    if request.method == 'PUT':
+        instance = user.semester_set.get(id=request.data['id'])
+        return Response({
+            "message": "Semester Updated successfully.",
+            "data": SemesterSerializer().update(instance, request.data, user)
+        })
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -179,6 +181,12 @@ def classroomView(request):
             delete_handler(
                 user.classroom_set, request, 'Classroom'
             ))
+    if request.method == 'PUT':
+        instance = user.classroom_set.get(id=request.data['id'])
+        return Response({
+            "message": "Classroom Updated successfully.",
+            "data": ClassroomSerializer().update(instance, request.data, user)
+        })
 
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
@@ -200,3 +208,9 @@ def teacherView(request):
             delete_handler(
                 user.teacher_set, request, 'Teacher'
             ))
+    if request.method == 'PUT':
+        instance = user.teacher_set.get(id=request.data['id'])
+        return Response({
+            "message": "Teacher Updated successfully.",
+            "data": TeacherSerializer().update(instance, request.data, user)
+        })

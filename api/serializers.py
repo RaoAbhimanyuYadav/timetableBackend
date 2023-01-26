@@ -15,11 +15,25 @@ class BellTimingSerializer(serializers.ModelSerializer):
         model = Bell_Timing
         fields = ['id', 'name', 'start_time', 'end_time']
 
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.start_time = validated_data.get(
+            'start_time', instance.start_time)
+        instance.end_time = validated_data.get('end_time', instance.end_time)
+        instance.save()
+        return BellTimingSerializer(instance, many=False).data
+
 
 class WorkingDaySerializer(serializers.ModelSerializer):
     class Meta:
         model = Working_Day
         fields = ['id', 'name', 'code']
+
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        instance.save()
+        return WorkingDaySerializer(instance, many=False).data
 
 
 class SubjectTimeOffSerializer(serializers.ModelSerializer):
@@ -28,7 +42,7 @@ class SubjectTimeOffSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Subject_Time_Off
-        fields = ['bell_timing', 'working_day']
+        fields = ['id', 'bell_timing', 'working_day']
 
     def create(self, validated_data, instance, user):
         return set_time_off_handler(
@@ -53,6 +67,22 @@ class SubjectSerializer(serializers.ModelSerializer):
                 SubjectTimeOffSerializer(time_off_instance, many=False).data)
         return serialized
 
+    def update(self, instance, validated_data, user):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        new_data = validated_data.get('subject_time_off_set', [])
+        old = instance.subject_time_off_set.all()
+        old_data = SubjectTimeOffSerializer(old, many=True).data
+        for data in old_data:
+            if data not in new_data:
+                # Remove already present data
+                Subject_Time_Off.objects.get(id=data['id']).delete()
+        # NEWLY ADDED
+        for data in new_data:
+            if 'id' not in data:
+                SubjectTimeOffSerializer().create(data, instance, user)
+        return SubjectSerializer(instance, many=False).data
+
 
 class SemesterTimeOffSerializer(serializers.ModelSerializer):
     bell_timing = BellTimingSerializer(many=False)
@@ -60,7 +90,7 @@ class SemesterTimeOffSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Semester_Time_Off
-        fields = ['bell_timing', 'working_day']
+        fields = ['id', 'bell_timing', 'working_day']
 
     def create(self, validated_data, instance, user):
         return set_time_off_handler(
@@ -106,6 +136,35 @@ class SemesterSerializer(serializers.ModelSerializer):
 
         return serialized
 
+    def update(self, instance, validated_data, user):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        new_time_data = validated_data.get('semester_time_off_set', [])
+        new_grp_data = validated_data.get('semester_group_set', [])
+        old_time = instance.semester_time_off_set.all()
+        old_time_data = SemesterTimeOffSerializer(old_time, many=True).data
+        for data in old_time_data:
+            if data not in new_time_data:
+                # Remove already present data
+                Semester_Time_Off.objects.get(id=data['id']).delete()
+        # NEWLY ADDED
+        for data in new_time_data:
+            if 'id' not in data:
+                SemesterTimeOffSerializer().create(data, instance, user)
+
+        old_grp = instance.semester_group_set.all()
+        old_grp_data = SemesterGroupSerializer(old_grp, many=True).data
+        for data in old_grp_data:
+            if data not in new_grp_data:
+                # Remove already present data
+                Semester_Group.objects.get(id=data['id']).delete()
+        # NEWLY ADDED
+        for data in new_grp_data:
+            if 'id' not in data:
+                SemesterGroupSerializer().create(data, instance, user)
+
+        return SemesterSerializer(instance, many=False).data
+
 
 class ClassroomTimeOffSerializer(serializers.ModelSerializer):
     bell_timing = BellTimingSerializer(many=False)
@@ -113,7 +172,7 @@ class ClassroomTimeOffSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Classroom_Time_Off
-        fields = ['bell_timing', 'working_day']
+        fields = ['id', 'bell_timing', 'working_day']
 
     def create(self, validated_data, instance, user):
         return set_time_off_handler(
@@ -138,6 +197,23 @@ class ClassroomSerializer(serializers.ModelSerializer):
                 ClassroomTimeOffSerializer(time_off_instance, many=False).data)
         return serialized
 
+    def update(self, instance, validated_data, user):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        new_data = validated_data.get('classroom_time_off_set', [])
+        old = instance.classroom_time_off_set.all()
+        old_data = ClassroomTimeOffSerializer(old, many=True).data
+        for data in old_data:
+            if data not in new_data:
+                # Remove already present data
+                Classroom_Time_Off.objects.get(id=data['id']).delete()
+        # NEWLY ADDED
+        for data in new_data:
+            if 'id' not in data:
+                ClassroomTimeOffSerializer().create(data, instance, user)
+
+        return ClassroomSerializer(instance, many=False).data
+
 
 class TeacherTimeOffSerializer(serializers.ModelSerializer):
     bell_timing = BellTimingSerializer(many=False)
@@ -145,7 +221,7 @@ class TeacherTimeOffSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Teacher_Time_Off
-        fields = ['bell_timing', 'working_day']
+        fields = ["id", 'bell_timing', 'working_day']
 
     def create(self, validated_data, instance, user):
         return set_time_off_handler(
@@ -169,6 +245,24 @@ class TeacherSerializer(serializers.ModelSerializer):
             serialized['teacher_time_off_set'].append(
                 TeacherTimeOffSerializer(time_off_instance, many=False).data)
         return serialized
+
+    def update(self, instance, validated_data, user):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        instance.color = validated_data.get('code', instance.color)
+        new_data = validated_data.get('teacher_time_off_set', [])
+        old = instance.teacher_time_off_set.all()
+        old_data = TeacherTimeOffSerializer(old, many=True).data
+        for data in old_data:
+            if data not in new_data:
+                # Remove already present data
+                Teacher_Time_Off.objects.get(id=data['id']).delete()
+        # NEWLY ADDED
+        for data in new_data:
+            if 'id' not in data:
+                TeacherTimeOffSerializer().create(data, instance, user)
+
+        return TeacherSerializer(instance, many=False).data
 
 
 class LessonSerializer(serializers.ModelSerializer):
