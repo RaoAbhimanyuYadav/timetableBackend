@@ -14,7 +14,8 @@ from .serializers import (
     SubjectSerializer,
     SemesterSerializer,
     ClassroomSerializer,
-    TeacherSerializer
+    TeacherSerializer,
+    LessonSerializer
 )
 
 from .functions import get_handler, set_handler, delete_handler
@@ -213,4 +214,31 @@ def teacherView(request):
         return Response({
             "message": "Teacher Updated successfully.",
             "data": TeacherSerializer().update(instance, request.data, user)
+        })
+
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def lessonView(request):
+    user = request.user
+    if request.method == 'GET':
+        return Response(
+            get_handler(
+                user.lesson_set, LessonSerializer, 'Lessons'
+            ))
+    if request.method == 'POST':
+        return Response({
+            "message": "Lesson added successfully.",
+            "data": LessonSerializer().create(request.data, user)
+        })
+    if request.method == 'DELETE':
+        return Response(
+            delete_handler(
+                user.lesson_set, request, 'Lesson'
+            ))
+    if request.method == 'PUT':
+        instance = user.lesson_set.get(id=request.data['id'])
+        return Response({
+            "message": "Teacher Updated successfully.",
+            "data": LessonSerializer().update(instance, request.data, user)
         })

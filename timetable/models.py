@@ -200,4 +200,4 @@ class Lesson(models.Model):
             'semester', 'semester_group')
 
     def __str__(self):
-        return f"{self.lesson_per_week} "
+        return f"{self.teacher} {self.subject}"
