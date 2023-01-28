@@ -237,3 +237,35 @@ def lessonView(request):
             "message": "Teacher Updated successfully.",
             "data": LessonSerializer().update(instance, request.data, user)
         })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def allView(request):
+    user = request.user
+    if request.method == 'GET':
+        resp = {
+            'bellTiming': get_handler(
+                user.bell_timing_set, BellTimingSerializer, 'Bell Timing'
+            )['data'],
+            'workingDay': get_handler(
+                user.working_day_set, WorkingDaySerializer, "Working Day"
+            )['data'],
+            'subject': get_handler(
+                user.subject_set, SubjectSerializer, "Subject"
+            )['data'],
+            'semester': get_handler(
+                user.semester_set, SemesterSerializer, 'Semester'
+            )['data'],
+            'classroom': get_handler(
+                user.classroom_set, ClassroomSerializer, "Classroom"
+            )['data'],
+            'teacher': get_handler(
+                user.teacher_set, TeacherSerializer, 'Teacher'
+            )['data'],
+            "lesson": get_handler(
+                user.lesson_set, LessonSerializer, 'Lessons'
+            )['data']
+        }
+
+        return Response(resp)
