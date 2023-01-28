@@ -37,12 +37,7 @@ def register(request):
             username=username,
             password=data['password']
         )
-        if 'email' in data:
-            instance.email = data['email']
-        if 'first_name' in data:
-            instance.first_name = data['first_name']
-        if 'last_name' in data:
-            instance.last_name = data['last_name']
+        instance.set_password(data['password'])
         instance.save()
         refresh = RefreshToken.for_user(instance)
         return Response({
