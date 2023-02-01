@@ -176,10 +176,11 @@ class ClassroomTimeOffSerializer(serializers.ModelSerializer):
 
 class ClassroomSerializer(serializers.ModelSerializer):
     classroom_time_off_set = ClassroomTimeOffSerializer(many=True)
+    semesters = SemesterSerializer(many=True)
 
     class Meta:
         model = Classroom
-        fields = ['id', 'name', 'code', 'classroom_time_off_set']
+        fields = ['id', 'name', 'code', 'classroom_time_off_set', 'semesters']
 
     def create(self, validated_data, user):
         instance = set_handler_with_time_off(
@@ -187,6 +188,9 @@ class ClassroomSerializer(serializers.ModelSerializer):
 
         for data in validated_data['classroom_time_off_set']:
             ClassroomTimeOffSerializer().create(data, instance, user)
+
+        for data in validated_data['semesters']:
+            instance.semesters.add(data['id'])
 
         return ClassroomSerializer(instance, many=False).data
 
@@ -206,6 +210,11 @@ class ClassroomSerializer(serializers.ModelSerializer):
         for data in new_data:
             if 'id' not in data:
                 ClassroomTimeOffSerializer().create(data, instance, user)
+
+        instance.semesters.clear()
+        new_sem_data = validated_data.get('semesters', [])
+        for data in new_sem_data:
+            instance.semesters.add(data['id'])
 
         return ClassroomSerializer(instance, many=False).data
 

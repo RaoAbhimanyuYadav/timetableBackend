@@ -119,6 +119,7 @@ class Classroom(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=250)
     code = models.CharField(max_length=25)
+    semesters = models.ManyToManyField(Semester)
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
