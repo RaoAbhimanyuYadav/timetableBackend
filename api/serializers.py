@@ -84,6 +84,55 @@ class SubjectSerializer(serializers.ModelSerializer):
         return SubjectSerializer(instance, many=False).data
 
 
+class ClassroomTimeOffSerializer(serializers.ModelSerializer):
+    bell_timing = BellTimingSerializer(many=False)
+    working_day = WorkingDaySerializer(many=False)
+
+    class Meta:
+        model = Classroom_Time_Off
+        fields = ['id', 'bell_timing', 'working_day']
+
+    def create(self, validated_data, instance, user):
+        return set_time_off_handler(
+            validated_data, instance, user, 'classroom_id',  Classroom_Time_Off)
+
+
+class ClassroomSerializer(serializers.ModelSerializer):
+    classroom_time_off_set = ClassroomTimeOffSerializer(many=True)
+
+    class Meta:
+        model = Classroom
+        fields = ['id', 'name', 'code', 'classroom_time_off_set']
+
+    def create(self, validated_data, user):
+        instance = set_handler_with_time_off(
+            Classroom, user, validated_data, ['name', 'code'])
+
+        for data in validated_data['classroom_time_off_set']:
+            ClassroomTimeOffSerializer().create(data, instance, user)
+
+        return ClassroomSerializer(instance, many=False).data
+
+    def update(self, instance, validated_data, user):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        instance.save()
+
+        new_data = validated_data.get('classroom_time_off_set', [])
+        old = instance.classroom_time_off_set.all()
+        old_data = ClassroomTimeOffSerializer(old, many=True).data
+        for data in old_data:
+            if data not in new_data:
+                # Remove already present data
+                Classroom_Time_Off.objects.get(id=data['id']).delete()
+        # NEWLY ADDED
+        for data in new_data:
+            if 'id' not in data:
+                ClassroomTimeOffSerializer().create(data, instance, user)
+
+        return ClassroomSerializer(instance, many=False).data
+
+
 class SemesterTimeOffSerializer(serializers.ModelSerializer):
     bell_timing = BellTimingSerializer(many=False)
     working_day = WorkingDaySerializer(many=False)
@@ -111,15 +160,21 @@ class SemesterGroupSerializer(serializers.ModelSerializer):
 class SemesterSerializer(serializers.ModelSerializer):
     semester_time_off_set = SemesterTimeOffSerializer(many=True)
     semester_group_set = SemesterGroupSerializer(many=True)
+    classroom = ClassroomSerializer(many=False)
 
     class Meta:
         model = Semester
         fields = [
-            'id', 'name', 'code', 'semester_time_off_set', 'semester_group_set']
+            'id', 'name', 'code', 'classroom', 'semester_time_off_set', 'semester_group_set']
 
     def create(self, validated_data, user):
-        instance = set_handler_with_time_off(
-            Semester, user, validated_data, ['name', 'code'])
+        classroom = Classroom.objects.get(
+            id=validated_data['classroom']['id'])
+        kwargs = {}
+        for key in ['name', 'code']:
+            kwargs[key] = validated_data[key]
+        instance = Semester.objects.create(
+            owner=user, **kwargs, classroom=classroom)
 
         for data in validated_data['semester_time_off_set']:
             SemesterTimeOffSerializer().create(data, instance, user)
@@ -132,6 +187,8 @@ class SemesterSerializer(serializers.ModelSerializer):
     def update(self, instance, validated_data, user):
         instance.name = validated_data.get('name', instance.name)
         instance.code = validated_data.get('code', instance.code)
+        instance.classroom = Classroom.objects.get(
+            id=validated_data.get('classroom', {}).get('id', instance.classroom.id))
         instance.save()
 
         new_time_data = validated_data.get('semester_time_off_set', [])
@@ -159,64 +216,6 @@ class SemesterSerializer(serializers.ModelSerializer):
                 SemesterGroupSerializer().create(data, instance, user)
 
         return SemesterSerializer(instance, many=False).data
-
-
-class ClassroomTimeOffSerializer(serializers.ModelSerializer):
-    bell_timing = BellTimingSerializer(many=False)
-    working_day = WorkingDaySerializer(many=False)
-
-    class Meta:
-        model = Classroom_Time_Off
-        fields = ['id', 'bell_timing', 'working_day']
-
-    def create(self, validated_data, instance, user):
-        return set_time_off_handler(
-            validated_data, instance, user, 'classroom_id',  Classroom_Time_Off)
-
-
-class ClassroomSerializer(serializers.ModelSerializer):
-    classroom_time_off_set = ClassroomTimeOffSerializer(many=True)
-    semesters = SemesterSerializer(many=True)
-
-    class Meta:
-        model = Classroom
-        fields = ['id', 'name', 'code', 'classroom_time_off_set', 'semesters']
-
-    def create(self, validated_data, user):
-        instance = set_handler_with_time_off(
-            Classroom, user, validated_data, ['name', 'code'])
-
-        for data in validated_data['classroom_time_off_set']:
-            ClassroomTimeOffSerializer().create(data, instance, user)
-
-        for data in validated_data['semesters']:
-            instance.semesters.add(data['id'])
-
-        return ClassroomSerializer(instance, many=False).data
-
-    def update(self, instance, validated_data, user):
-        instance.name = validated_data.get('name', instance.name)
-        instance.code = validated_data.get('code', instance.code)
-        instance.save()
-
-        new_data = validated_data.get('classroom_time_off_set', [])
-        old = instance.classroom_time_off_set.all()
-        old_data = ClassroomTimeOffSerializer(old, many=True).data
-        for data in old_data:
-            if data not in new_data:
-                # Remove already present data
-                Classroom_Time_Off.objects.get(id=data['id']).delete()
-        # NEWLY ADDED
-        for data in new_data:
-            if 'id' not in data:
-                ClassroomTimeOffSerializer().create(data, instance, user)
-
-        instance.semesters.clear()
-        new_sem_data = validated_data.get('semesters', [])
-        for data in new_sem_data:
-            instance.semesters.add(data['id'])
-
-        return ClassroomSerializer(instance, many=False).data
 
 
 class LessonSerializer(serializers.ModelSerializer):
