@@ -219,58 +219,8 @@ class ClassroomSerializer(serializers.ModelSerializer):
         return ClassroomSerializer(instance, many=False).data
 
 
-class TeacherTimeOffSerializer(serializers.ModelSerializer):
-    bell_timing = BellTimingSerializer(many=False)
-    working_day = WorkingDaySerializer(many=False)
-
-    class Meta:
-        model = Teacher_Time_Off
-        fields = ["id", 'bell_timing', 'working_day']
-
-    def create(self, validated_data, instance, user):
-        return set_time_off_handler(
-            validated_data, instance, user, 'teacher_id', Teacher_Time_Off)
-
-
-class TeacherSerializer(serializers.ModelSerializer):
-    teacher_time_off_set = TeacherTimeOffSerializer(many=True)
-
-    class Meta:
-        model = Teacher
-        fields = ['id', 'name', 'code', 'color', 'teacher_time_off_set']
-
-    def create(self, validated_data, user):
-        instance = set_handler_with_time_off(
-            Teacher, user, validated_data, ['name', 'code', 'color'])
-
-        for data in validated_data['teacher_time_off_set']:
-            TeacherTimeOffSerializer().create(data, instance, user)
-
-        return TeacherSerializer(instance, many=False).data
-
-    def update(self, instance, validated_data, user):
-        instance.name = validated_data.get('name', instance.name)
-        instance.code = validated_data.get('code', instance.code)
-        instance.color = validated_data.get('color', instance.color)
-        instance.save()
-
-        new_data = validated_data.get('teacher_time_off_set', [])
-        old = instance.teacher_time_off_set.all()
-        old_data = TeacherTimeOffSerializer(old, many=True).data
-        for data in old_data:
-            if data not in new_data:
-                # Remove already present data
-                Teacher_Time_Off.objects.get(id=data['id']).delete()
-        # NEWLY ADDED
-        for data in new_data:
-            if 'id' not in data:
-                TeacherTimeOffSerializer().create(data, instance, user)
-
-        return TeacherSerializer(instance, many=False).data
-
-
 class LessonSerializer(serializers.ModelSerializer):
-    teacher = TeacherSerializer(many=False)
+    # teacher = TeacherSerializer(many=False)
     classroom = ClassroomSerializer(many=False)
     subject = SubjectSerializer(many=False)
     semester = SemesterSerializer(many=False)
@@ -279,7 +229,7 @@ class LessonSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = [
-            'id', 'teacher', 'classroom', 'subject',
+            'id',  'teacher', 'classroom', 'subject',
             'semester', 'semester_group', 'lesson_per_week', 'is_lab']
 
     def create(self, data, user):
@@ -313,3 +263,55 @@ class LessonSerializer(serializers.ModelSerializer):
             id=data.get('semester_group', {}).get('id', instance.semester_group.id))
         instance.save()
         return LessonSerializer(instance, many=False).data
+
+
+class TeacherTimeOffSerializer(serializers.ModelSerializer):
+    bell_timing = BellTimingSerializer(many=False)
+    working_day = WorkingDaySerializer(many=False)
+
+    class Meta:
+        model = Teacher_Time_Off
+        fields = ["id", 'bell_timing', 'working_day']
+
+    def create(self, validated_data, instance, user):
+        return set_time_off_handler(
+            validated_data, instance, user, 'teacher_id', Teacher_Time_Off)
+
+
+class TeacherSerializer(serializers.ModelSerializer):
+    teacher_time_off_set = TeacherTimeOffSerializer(many=True)
+    lesson_set = LessonSerializer(many=True)
+
+    class Meta:
+        model = Teacher
+        fields = ['id', 'name', 'code', 'color',
+                  'teacher_time_off_set', 'lesson_set']
+
+    def create(self, validated_data, user):
+        instance = set_handler_with_time_off(
+            Teacher, user, validated_data, ['name', 'code', 'color'])
+
+        for data in validated_data['teacher_time_off_set']:
+            TeacherTimeOffSerializer().create(data, instance, user)
+
+        return TeacherSerializer(instance, many=False).data
+
+    def update(self, instance, validated_data, user):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        instance.color = validated_data.get('color', instance.color)
+        instance.save()
+
+        new_data = validated_data.get('teacher_time_off_set', [])
+        old = instance.teacher_time_off_set.all()
+        old_data = TeacherTimeOffSerializer(old, many=True).data
+        for data in old_data:
+            if data not in new_data:
+                # Remove already present data
+                Teacher_Time_Off.objects.get(id=data['id']).delete()
+        # NEWLY ADDED
+        for data in new_data:
+            if 'id' not in data:
+                TeacherTimeOffSerializer().create(data, instance, user)
+
+        return TeacherSerializer(instance, many=False).data
