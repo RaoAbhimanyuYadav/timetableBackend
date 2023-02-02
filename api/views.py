@@ -262,9 +262,6 @@ def allView(request):
             )['data'],
             'teacher': get_handler(
                 user.teacher_set, TeacherSerializer, 'Teacher'
-            )['data'],
-            "lesson": get_handler(
-                user.lesson_set, LessonSerializer, 'Lessons'
             )['data']
         }
 
