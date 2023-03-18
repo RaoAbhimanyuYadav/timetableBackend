@@ -197,7 +197,7 @@ class Lesson(models.Model):
 
     class Meta:
         unique_together = (
-            'owner', 'lesson_per_week', 'classroom', 'subject',
+            'owner','teacher', 'lesson_per_week', 'classroom', 'subject',
             'semester', 'semester_group')
 
     def __str__(self):
