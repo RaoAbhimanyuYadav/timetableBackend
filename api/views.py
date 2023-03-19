@@ -217,10 +217,11 @@ def teacherView(request):
 def lessonView(request):
     user = request.user
     if request.method == 'GET':
-        return Response(
-            get_handler(
-                user.lesson_set, LessonSerializer, 'Lessons'
-            ))
+        inst = user.lesson_set.all()
+        if request.query_params:
+            inst = user.lesson_set.filter(teacher=request.query_params['id'])
+        return Response({"data": LessonSerializer(inst, many=True).data})
+
     if request.method == 'POST':
         return Response({
             "message": "Lesson added successfully.",

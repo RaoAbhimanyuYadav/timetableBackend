@@ -218,11 +218,18 @@ class SemesterSerializer(serializers.ModelSerializer):
         return SemesterSerializer(instance, many=False).data
 
 
+class TeacherFormatSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Teacher
+        fields = ['id']
+
+
 class LessonSerializer(serializers.ModelSerializer):
     classroom = ClassroomSerializer(many=False)
     subject = SubjectSerializer(many=False)
     semester = SemesterSerializer(many=True)
     semester_group = SemesterGroupSerializer(many=True)
+    teacher = TeacherFormatSerializer(many=True)
 
     class Meta:
         model = Lesson
@@ -300,12 +307,10 @@ class TeacherTimeOffSerializer(serializers.ModelSerializer):
 
 class TeacherSerializer(serializers.ModelSerializer):
     teacher_time_off_set = TeacherTimeOffSerializer(many=True)
-    lesson_set = LessonSerializer(many=True)
 
     class Meta:
         model = Teacher
-        fields = ['id', 'name', 'code', 'color',
-                  'teacher_time_off_set', 'lesson_set']
+        fields = ['id', 'name', 'code', 'color', 'teacher_time_off_set']
 
     def create(self, validated_data, user):
         instance = set_handler_with_time_off(
