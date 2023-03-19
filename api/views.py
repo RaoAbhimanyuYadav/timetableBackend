@@ -234,7 +234,7 @@ def lessonView(request):
     if request.method == 'PUT':
         instance = user.lesson_set.get(id=request.data['id'])
         return Response({
-            "message": "Teacher Updated successfully.",
+            "message": "Lesson Updated successfully.",
             "data": LessonSerializer().update(instance, request.data, user)
         })
 

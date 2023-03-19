@@ -183,22 +183,16 @@ class Teacher_Time_Off(models.Model):
 
 class Lesson(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    teacher = models.ForeignKey(Teacher, on_delete=models.CASCADE)
+    teacher = models.ManyToManyField(Teacher)
     classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
-    semester_group = models.ForeignKey(
-        Semester_Group, on_delete=models.CASCADE)
+    semester = models.ManyToManyField(Semester)
+    semester_group = models.ManyToManyField(Semester_Group)
     lesson_per_week = models.IntegerField(default=1)
-    is_lab = models.BooleanField(default=False)
+    is_lab = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
 
-    class Meta:
-        unique_together = (
-            'owner','teacher', 'lesson_per_week', 'classroom', 'subject',
-            'semester', 'semester_group')
-
     def __str__(self):
-        return f"{self.teacher} {self.subject}"
+        return f"{self.classroom} {self.subject}"

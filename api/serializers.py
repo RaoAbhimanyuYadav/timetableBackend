@@ -219,11 +219,10 @@ class SemesterSerializer(serializers.ModelSerializer):
 
 
 class LessonSerializer(serializers.ModelSerializer):
-    # teacher = TeacherSerializer(many=False)
     classroom = ClassroomSerializer(many=False)
     subject = SubjectSerializer(many=False)
-    semester = SemesterSerializer(many=False)
-    semester_group = SemesterGroupSerializer(many=False)
+    semester = SemesterSerializer(many=True)
+    semester_group = SemesterGroupSerializer(many=True)
 
     class Meta:
         model = Lesson
@@ -232,34 +231,56 @@ class LessonSerializer(serializers.ModelSerializer):
             'semester', 'semester_group', 'lesson_per_week', 'is_lab']
 
     def create(self, data, user):
-        teacher_inst = Teacher.objects.get(id=data['teacher']['id'])
         classroom_inst = Classroom.objects.get(id=data['classroom']['id'])
         subject_inst = Subject.objects.get(id=data['subject']['id'])
-        semester_inst = Semester.objects.get(id=data['semester']['id'])
-        semester_grp_inst = Semester_Group.objects.get(
-            id=data['semester_group']['id'])
         lesson_per_week = data['lesson_per_week']
         is_lab = data['is_lab']
+
         instance = Lesson.objects.create(
-            owner=user, teacher=teacher_inst, subject=subject_inst,
-            classroom=classroom_inst, semester=semester_inst, semester_group=semester_grp_inst,
+            owner=user, subject=subject_inst, classroom=classroom_inst,
             lesson_per_week=lesson_per_week, is_lab=is_lab)
+
+        for t_id in data['teacher']:
+            teacher_inst = Teacher.objects.get(id=t_id['id'])
+            instance.teacher.add(teacher_inst)
+
+        for s_id in data['semester']:
+            semester_inst = Semester.objects.get(id=s_id['id'])
+            instance.semester.add(semester_inst)
+
+        for g_id in data['semester_group']:
+            semester_grp_inst = Semester_Group.objects.get(id=g_id['id'])
+            instance.semester_group.add(semester_grp_inst)
+
         return LessonSerializer(instance, many=False).data
 
     def update(self, instance, data, user):
         instance.lesson_per_week = data.get(
             'lesson_per_week', instance.lesson_per_week)
         instance.is_lab = data.get('is_lab', instance.is_lab)
-        instance.teacher = Teacher.objects.get(id=data.get(
-            'teacher', {}).get('id', instance.teacher.id))
-        instance.classroom = Classroom.objects.get(
-            id=data.get('classroom', {}).get('id', instance.classroom.id))
         instance.subject = Subject.objects.get(id=data.get(
             'subject', {}).get('id', instance.subject.id))
-        instance.semester = Semester.objects.get(
-            id=data.get('semester', {}).get('id', instance.semester.id))
-        instance.semester_group = Semester_Group.objects.get(
-            id=data.get('semester_group', {}).get('id', instance.semester_group.id))
+        instance.classroom = Classroom.objects.get(
+            id=data.get('classroom', {}).get('id', instance.classroom.id))
+
+        new_set = []
+        for t_id in data['teacher']:
+            teacher_inst = Teacher.objects.get(id=t_id['id'])
+            new_set.append(teacher_inst)
+        instance.teacher.set(new_set)
+
+        new_set = []
+        for s_id in data['semester']:
+            semester_inst = Semester.objects.get(id=s_id['id'])
+            new_set.append(semester_inst)
+        instance.semester.set(new_set)
+
+        new_set = []
+        for g_id in data['semester_group']:
+            semester_grp_inst = Semester_Group.objects.get(id=g_id['id'])
+            new_set.append(semester_grp_inst)
+        instance.semester_group.set(new_set)
+
         instance.save()
         return LessonSerializer(instance, many=False).data
 
