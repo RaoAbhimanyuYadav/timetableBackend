@@ -117,7 +117,7 @@ class Semester(models.Model):
 
 class Semester_Group(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    semester_id = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     name = models.CharField(max_length=250)
     code = models.CharField(max_length=25)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -125,7 +125,7 @@ class Semester_Group(models.Model):
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
 
     class Meta:
-        unique_together = ('owner', 'code', 'semester_id')
+        unique_together = ('owner', 'code', 'semester')
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -133,7 +133,7 @@ class Semester_Group(models.Model):
 
 class Semester_Time_Off(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    semester_id = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
     bell_timing = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
     working_day = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -142,10 +142,10 @@ class Semester_Time_Off(models.Model):
 
     class Meta:
         unique_together = (
-            'owner', 'semester_id', 'bell_timing', 'working_day')
+            'owner', 'semester', 'bell_timing', 'working_day')
 
     def __str__(self):
-        return f"{self.semester_id}"
+        return f"{self.semester}"
 
 
 class Teacher(models.Model):

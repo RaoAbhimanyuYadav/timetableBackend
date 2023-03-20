@@ -15,7 +15,8 @@ from .serializers import (
     SemesterSerializer,
     ClassroomSerializer,
     TeacherSerializer,
-    LessonSerializer
+    LessonSerializer,
+    LessonFormatSerializer
 )
 
 from .functions import get_handler, set_handler, delete_handler
@@ -220,7 +221,8 @@ def lessonView(request):
         inst = user.lesson_set.all()
         if request.query_params:
             inst = user.lesson_set.filter(teacher=request.query_params['id'])
-        return Response({"data": LessonSerializer(inst, many=True).data})
+            return Response({"data": LessonSerializer(inst, many=True).data})
+        return Response({"data": LessonFormatSerializer(inst, many=True).data})
 
     if request.method == 'POST':
         return Response({

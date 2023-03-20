@@ -143,7 +143,7 @@ class SemesterTimeOffSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data, instance, user):
         return set_time_off_handler(
-            validated_data, instance, user, 'semester_id', Semester_Time_Off)
+            validated_data, instance, user, 'semester', Semester_Time_Off)
 
 
 class SemesterGroupSerializer(serializers.ModelSerializer):
@@ -154,7 +154,7 @@ class SemesterGroupSerializer(serializers.ModelSerializer):
 
     def create(self, data, instance, user):
         return Semester_Group.objects.create(
-            owner=user, name=data['name'], code=data['code'], semester_id=instance)
+            owner=user, name=data['name'], code=data['code'], semester=instance)
 
 
 class SemesterSerializer(serializers.ModelSerializer):
@@ -218,10 +218,55 @@ class SemesterSerializer(serializers.ModelSerializer):
         return SemesterSerializer(instance, many=False).data
 
 
-class TeacherFormatSerializer(serializers.ModelSerializer):
+class TeacherTimeOffSerializer(serializers.ModelSerializer):
+    bell_timing = BellTimingSerializer(many=False)
+    working_day = WorkingDaySerializer(many=False)
+
+    class Meta:
+        model = Teacher_Time_Off
+        fields = ["id", 'bell_timing', 'working_day']
+
+    def create(self, validated_data, instance, user):
+        return set_time_off_handler(
+            validated_data, instance, user, 'teacher_id', Teacher_Time_Off)
+
+
+class TeacherSerializer(serializers.ModelSerializer):
+    teacher_time_off_set = TeacherTimeOffSerializer(many=True)
+
     class Meta:
         model = Teacher
-        fields = ['id']
+        fields = ['id', 'name', 'code', 'color',
+                  'teacher_time_off_set', 'lesson_set']
+
+    def create(self, validated_data, user):
+        instance = set_handler_with_time_off(
+            Teacher, user, validated_data, ['name', 'code', 'color'])
+
+        for data in validated_data['teacher_time_off_set']:
+            TeacherTimeOffSerializer().create(data, instance, user)
+
+        return TeacherSerializer(instance, many=False).data
+
+    def update(self, instance, validated_data, user):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        instance.color = validated_data.get('color', instance.color)
+        instance.save()
+
+        new_data = validated_data.get('teacher_time_off_set', [])
+        old = instance.teacher_time_off_set.all()
+        old_data = TeacherTimeOffSerializer(old, many=True).data
+        for data in old_data:
+            if data not in new_data:
+                # Remove already present data
+                Teacher_Time_Off.objects.get(id=data['id']).delete()
+        # NEWLY ADDED
+        for data in new_data:
+            if 'id' not in data:
+                TeacherTimeOffSerializer().create(data, instance, user)
+
+        return TeacherSerializer(instance, many=False).data
 
 
 class LessonSerializer(serializers.ModelSerializer):
@@ -229,7 +274,7 @@ class LessonSerializer(serializers.ModelSerializer):
     subject = SubjectSerializer(many=False)
     semester = SemesterSerializer(many=True)
     semester_group = SemesterGroupSerializer(many=True)
-    teacher = TeacherFormatSerializer(many=True)
+    teacher = TeacherSerializer(many=True)
 
     class Meta:
         model = Lesson
@@ -292,51 +337,42 @@ class LessonSerializer(serializers.ModelSerializer):
         return LessonSerializer(instance, many=False).data
 
 
-class TeacherTimeOffSerializer(serializers.ModelSerializer):
-    bell_timing = BellTimingSerializer(many=False)
-    working_day = WorkingDaySerializer(many=False)
-
-    class Meta:
-        model = Teacher_Time_Off
-        fields = ["id", 'bell_timing', 'working_day']
-
-    def create(self, validated_data, instance, user):
-        return set_time_off_handler(
-            validated_data, instance, user, 'teacher_id', Teacher_Time_Off)
-
-
-class TeacherSerializer(serializers.ModelSerializer):
+class TeacherFormatSerializer(serializers.ModelSerializer):
     teacher_time_off_set = TeacherTimeOffSerializer(many=True)
 
     class Meta:
         model = Teacher
-        fields = ['id', 'name', 'code', 'color', 'teacher_time_off_set']
+        fields = ['id', "name", "code", "color", "teacher_time_off_set"]
 
-    def create(self, validated_data, user):
-        instance = set_handler_with_time_off(
-            Teacher, user, validated_data, ['name', 'code', 'color'])
 
-        for data in validated_data['teacher_time_off_set']:
-            TeacherTimeOffSerializer().create(data, instance, user)
+class SemesterFormatSerializer(serializers.ModelSerializer):
+    total_groups = serializers.SerializerMethodField('get_total_groups')
+    semester_time_off_set = SemesterTimeOffSerializer(many=True)
 
-        return TeacherSerializer(instance, many=False).data
+    def get_total_groups(self, sem):
+        return sem.semester_group_set.all().__len__() - 1
 
-    def update(self, instance, validated_data, user):
-        instance.name = validated_data.get('name', instance.name)
-        instance.code = validated_data.get('code', instance.code)
-        instance.color = validated_data.get('color', instance.color)
-        instance.save()
+    class Meta:
+        model = Semester
+        fields = ["id", "name", "code",
+                  "semester_time_off_set", "total_groups"]
 
-        new_data = validated_data.get('teacher_time_off_set', [])
-        old = instance.teacher_time_off_set.all()
-        old_data = TeacherTimeOffSerializer(old, many=True).data
-        for data in old_data:
-            if data not in new_data:
-                # Remove already present data
-                Teacher_Time_Off.objects.get(id=data['id']).delete()
-        # NEWLY ADDED
-        for data in new_data:
-            if 'id' not in data:
-                TeacherTimeOffSerializer().create(data, instance, user)
 
-        return TeacherSerializer(instance, many=False).data
+class SemesterGroupFormatSerializer(serializers.ModelSerializer):
+    semester = SemesterFormatSerializer(many=False)
+
+    class Meta:
+        model = Semester_Group
+        fields = ['id', 'name', 'code', "semester"]
+
+
+class LessonFormatSerializer(serializers.ModelSerializer):
+    classroom = ClassroomSerializer(many=False)
+    subject = SubjectSerializer(many=False)
+    semester_group = SemesterGroupFormatSerializer(many=True)
+    teacher = TeacherFormatSerializer(many=True)
+
+    class Meta:
+        model = Lesson
+        fields = ["id",  "teacher", "classroom", "subject",
+                  "semester_group", "lesson_per_week", "is_lab"]
