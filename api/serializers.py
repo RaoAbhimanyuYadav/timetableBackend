@@ -280,17 +280,17 @@ class LessonSerializer(serializers.ModelSerializer):
         model = Lesson
         fields = [
             'id',  'teacher', 'classroom', 'subject',
-            'semester', 'semester_group', 'lesson_per_week', 'is_lab']
+            'semester', 'semester_group', 'lesson_per_week', 'lesson_length']
 
     def create(self, data, user):
         classroom_inst = Classroom.objects.get(id=data['classroom']['id'])
         subject_inst = Subject.objects.get(id=data['subject']['id'])
         lesson_per_week = data['lesson_per_week']
-        is_lab = data['is_lab']
+        lesson_length = data['lesson_length']
 
         instance = Lesson.objects.create(
             owner=user, subject=subject_inst, classroom=classroom_inst,
-            lesson_per_week=lesson_per_week, is_lab=is_lab)
+            lesson_per_week=lesson_per_week, lesson_length=lesson_length)
 
         for t_id in data['teacher']:
             teacher_inst = Teacher.objects.get(id=t_id['id'])
@@ -309,7 +309,8 @@ class LessonSerializer(serializers.ModelSerializer):
     def update(self, instance, data, user):
         instance.lesson_per_week = data.get(
             'lesson_per_week', instance.lesson_per_week)
-        instance.is_lab = data.get('is_lab', instance.is_lab)
+        instance.lesson_length = data.get(
+            'lesson_length', instance.lesson_length)
         instance.subject = Subject.objects.get(id=data.get(
             'subject', {}).get('id', instance.subject.id))
         instance.classroom = Classroom.objects.get(
@@ -348,6 +349,10 @@ class TeacherFormatSerializer(serializers.ModelSerializer):
 class SemesterFormatSerializer(serializers.ModelSerializer):
     total_groups = serializers.SerializerMethodField('get_total_groups')
     semester_time_off_set = SemesterTimeOffSerializer(many=True)
+    w_id = serializers.SerializerMethodField('get_w_id')
+
+    def get_w_id(self, sem):
+        return sem.semester_group_set.filter(code="W")[0].id
 
     def get_total_groups(self, sem):
         return sem.semester_group_set.all().__len__() - 1
@@ -355,7 +360,7 @@ class SemesterFormatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Semester
         fields = ["id", "name", "code",
-                  "semester_time_off_set", "total_groups"]
+                  "semester_time_off_set", "total_groups", "w_id"]
 
 
 class SemesterGroupFormatSerializer(serializers.ModelSerializer):
@@ -375,4 +380,4 @@ class LessonFormatSerializer(serializers.ModelSerializer):
     class Meta:
         model = Lesson
         fields = ["id",  "teacher", "classroom", "subject",
-                  "semester_group", "lesson_per_week", "is_lab"]
+                  "semester_group", "lesson_per_week", "lesson_length"]

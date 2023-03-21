@@ -189,7 +189,7 @@ class Lesson(models.Model):
     semester = models.ManyToManyField(Semester)
     semester_group = models.ManyToManyField(Semester_Group)
     lesson_per_week = models.IntegerField(default=1)
-    is_lab = models.IntegerField(default=0)
+    lesson_length = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
