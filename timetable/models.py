@@ -143,9 +143,9 @@ class Classroom(models.Model):
         return ((self.code) + ("-") +
                 (self.name))[0:64]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.c_id = self.id_generator()
-        super(Classroom, self).save()
+        super(Classroom, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('owner', 'code',)

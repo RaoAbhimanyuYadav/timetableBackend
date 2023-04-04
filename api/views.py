@@ -6,7 +6,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.models import User
 
-from timetable.models import Bell_Timing, Working_Day, Subject
+from timetable.models import Bell_Timing, Working_Day, Subject, Classroom, Semester
 
 
 from .serializers import (
@@ -14,8 +14,8 @@ from .serializers import (
     WorkingDaySerializer,
     TimeOffSerializer,
     SubjectSerializer,
+    ClassroomSerializer,
     # SemesterSerializer,
-    # ClassroomSerializer,
     # TeacherSerializer,
     # LessonSerializer,
     # LessonFormatSerializer
@@ -113,7 +113,7 @@ def subjectView(request):
     if request.method == 'POST':
         return create_handler(
             request, SubjectSerializer, "Subject Code must be unique",
-            time_off=request.data["time_off"]
+            time_off=request.data.get('time_off', [])
         )
     if request.method == 'DELETE':
         return delete_handler(
@@ -122,62 +122,57 @@ def subjectView(request):
     if request.method == 'PUT':
         return update_handler(
             request, user.subject_set,
-            SubjectSerializer, Subject, time_off=request.data['time_off']
+            SubjectSerializer, Subject,
+            time_off=request.data.get('time_off', [])
         )
 
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def classroomView(request):
+    user = request.user
+    if request.method == 'GET':
+        return get_handler(
+            user.classroom_set, ClassroomSerializer, "Classroom"
+        )
+    if request.method == 'POST':
+        return create_handler(
+            request, ClassroomSerializer, "Classroom Code must be unique",
+            time_off=request.data.get('time_off', [])
+        )
+    if request.method == 'DELETE':
+        return delete_handler(
+            user.classroom_set, request, 'Classroom'
+        )
+    if request.method == 'PUT':
+        return update_handler(
+            request, user.classroom_set,
+            ClassroomSerializer, Classroom,
+            time_off=request.data.get('time_off', [])
+        )
 
 # @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 # @permission_classes([IsAuthenticated])
 # def semesterView(request):
 #     user = request.user
 #     if request.method == 'GET':
-#         return Response(
-#             get_handler(
-#                 user.semester_set, SemesterSerializer, 'Semester'
-#             ))
+#         return get_handler(
+#             user.semester_set, SemesterSerializer, "Semester"
+#         )
 #     if request.method == 'POST':
-#         return Response({
-#             "message": "Semester added successfully.",
-#             "data": SemesterSerializer().create(request.data, user)
-#         })
+#         return create_handler(
+#             request, SemesterSerializer, "Semester Code must be unique",
+#             time_off=request.data.get('time_off', [])
+#         )
 #     if request.method == 'DELETE':
-#         return Response(
-#             delete_handler(
-#                 user.semester_set, request, 'Semester'
-#             ))
+#         return delete_handler(
+#             user.semester_set, request, 'Semester'
+#         )
 #     if request.method == 'PUT':
-#         instance = user.semester_set.get(id=request.data['id'])
-#         return Response({
-#             "message": "Semester Updated successfully.",
-#             "data": SemesterSerializer().update(instance, request.data, user)
-#         })
-
-
-# @api_view(['GET', 'POST', 'PUT', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def classroomView(request):
-#     user = request.user
-#     if request.method == 'GET':
-#         return Response(
-#             get_handler(
-#                 user.classroom_set, ClassroomSerializer, "Classroom"
-#             ))
-#     if request.method == 'POST':
-#         return Response({
-#             "message": "Classroom added successfully.",
-#             "data": ClassroomSerializer().create(request.data, user)
-#         })
-#     if request.method == 'DELETE':
-#         return Response(
-#             delete_handler(
-#                 user.classroom_set, request, 'Classroom'
-#             ))
-#     if request.method == 'PUT':
-#         instance = user.classroom_set.get(id=request.data['id'])
-#         return Response({
-#             "message": "Classroom Updated successfully.",
-#             "data": ClassroomSerializer().update(instance, request.data, user)
-#         })
+#         return update_handler(
+#             request, user.semester_set,
+#             SemesterSerializer, Semester, time_off=request.data.get('time_off', [])
+#         )
 
 
 # @api_view(['GET', 'POST', 'PUT', 'DELETE'])
