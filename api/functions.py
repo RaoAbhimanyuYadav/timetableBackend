@@ -3,6 +3,8 @@ from .serializers import Bell_Timing, Working_Day
 # import json
 
 import uuid
+from rest_framework.response import Response
+from django.db.utils import IntegrityError
 
 
 def is_valid_uuid(val):
@@ -14,10 +16,12 @@ def is_valid_uuid(val):
 
 
 def get_handler(instance, serializer, name):
-    return {
-        "message": f"{name} fetched successfully",
-        "data": serializer(instance.all(), many=True).data
-    }
+    return Response(
+        status=200,
+        data={
+            "message": f"{name} fetched successfully",
+            "data": serializer(instance.all(), many=True).data
+        })
 
 
 def set_handler(model, user, data, list, serializer, name):
@@ -41,17 +45,65 @@ def set_handler_with_time_off(model, user, data, list, ):
     return instance
 
 
+def create_handler(request, ModelSerializer, IntegrityErrMsg, **kwargs):
+    # try:
+    serializer = ModelSerializer(data=request.data)
+    if serializer.is_valid():
+        try:
+            instance = serializer.save(owner=request.user, **kwargs)
+            return Response(
+                status=200,
+                data={
+                    "data": ModelSerializer(instance, many=False).data
+                })
+        except IntegrityError:
+            return Response(
+                status=400,
+                data={
+                    "message": IntegrityErrMsg
+                })
+    else:
+        return Response(status=400, data={"message": serializer.errors})
+    # except:
+    #     return Response(status=500, data={"message": "Unexpected happen"})
+
+
 def delete_handler(query, request, name):
     if 'id' not in request.data:
-        return {"message": "Please send Id", "success": False}
+        return Response(status=400, data={"message": "Please send Id"})
     id = request.data['id']
     if not is_valid_uuid(id):
-        return {"message": "Not a valid UUID", "success": False}
+        return Response(status=400, data={"message": "Not a valid UUID"})
     instance = query.filter(id=id)
     if not instance.exists():
-        return {"message": "Invalid ID", "success": False}
+        return Response(status=400, data={"message": "Invalid ID"})
     instance.delete()
-    return {"message": f"{name} deleted successfully.", "success": True}
+    return Response(status=400, data={"message": f"{name} deleted successfully."})
+
+
+def update_handler(request, query, ModelSerializer, Model, **kwargs):
+    # try:
+    if 'id' not in request.data:
+        return Response(status=400, data={"message": "Please send Id"})
+    id = request.data['id']
+    if not is_valid_uuid(id):
+        return Response(status=400, data={"message": "Not a valid UUID"})
+    try:
+        instance = query.get(id=id)
+        serializer = ModelSerializer(instance, data=request.data)
+        if serializer.is_valid():
+            instance = serializer.save(**kwargs)
+            return Response(
+                status=200,
+                data={
+                    "data": ModelSerializer(instance, many=False).data
+                })
+        else:
+            return Response(status=400, data={"message": serializer.errors})
+    except Model.DoesNotExist:
+        return Response(status=400, data={"message": "Invalid ID"})
+    # except:
+    #     return Response(status=500, data={"message": "Unexpected happen"})
 
 
 def set_time_off_handler(data, instance, user, key,  time_off_model):

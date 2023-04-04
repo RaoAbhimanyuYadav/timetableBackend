@@ -12,27 +12,95 @@ class Bell_Timing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+
+    def id_generator(self):
+        return ((self.start_time.isoformat()[0:5]) + ("-") +
+                (self.end_time.isoformat()[0:5]))[0:64]
+
+    def save(self, *args, **kwargs):
+        self.c_id = self.id_generator()
+        super(Bell_Timing, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('owner', 'start_time', 'end_time')
+        ordering = ['start_time', 'end_time']
 
     def __str__(self):
         return f"On {self.name} {self.start_time} - {self.end_time}"
 
 
+DAYS_OF_WEEK = {
+    'Monday': 0,
+    'Tuesday': 1,
+    'Wednesday': 2,
+    'Thursday': 3,
+    'Friday': 4,
+    'Saturday': 5,
+    'Sunday': 6
+}
+DAYS = (
+    ("Monday", "Monday"),
+    ("Tuesday", "Tuesday"),
+    ("Wednesday", "Wednesday"),
+    ("Thursday", "Thursday"),
+    ("Friday", "Friday"),
+    ("Saturday", "Saturday"),
+    ("Sunday", "Sunday")
+)
+
+
 class Working_Day(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    name = models.CharField(max_length=10)
+    name = models.CharField(max_length=10, choices=DAYS)
     code = models.CharField(max_length=10)
+    index = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+
+    def id_generator(self):
+        return ((self.name) + ("-") +
+                (self.code) + ("-"))[0:64]
+
+    def save(self, *args, **kwargs):
+        self.c_id = self.id_generator()
+        self.index = DAYS_OF_WEEK.get(self.name, "Sunday")
+        super(Working_Day, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('owner', 'name',)
+        ordering = ['index']
 
     def __str__(self):
         return f"On {self.name}"
+
+
+class Time_Off(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    bell_timing = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
+    working_day = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
+    id = models.UUIDField(
+        default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+
+    def id_generator(self):
+        return ((self.bell_timing.c_id) + ("-") +
+                (self.working_day.c_id))[0:64]
+
+    def save(self, *args, **kwargs):
+        print(self)
+        self.c_id = self.id_generator()
+        super(Time_Off, self).save(*args, **kwargs)
+
+    class Meta:
+        unique_together = (
+            'owner', 'bell_timing', 'working_day')
+        ordering = ['working_day', 'bell_timing']
+
+    def __str__(self):
+        return f"{self.c_id}"
 
 
 class Subject(models.Model):
@@ -42,29 +110,23 @@ class Subject(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    time_off = models.ManyToManyField(Time_Off)
+
+    def id_generator(self):
+        return ((self.code) + ("-") +
+                (self.name))[0:64]
+
+    def save(self, *args, **kwargs):
+        self.c_id = self.id_generator()
+        super(Subject, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('owner', 'code',)
+        ordering = ['code']
 
     def __str__(self):
         return f"{self.name} ({self.code})"
-
-
-class Subject_Time_Off(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    subject_id = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    bell_timing = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
-    working_day = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    id = models.UUIDField(
-        default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-
-    class Meta:
-        unique_together = (
-            'owner', 'subject_id', 'bell_timing', 'working_day')
-
-    def __str__(self):
-        return f"{self.subject_id}"
 
 
 class Classroom(models.Model):
@@ -74,29 +136,23 @@ class Classroom(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    time_off = models.ManyToManyField(Time_Off)
+
+    def id_generator(self):
+        return ((self.code) + ("-") +
+                (self.name))[0:64]
+
+    def save(self):
+        self.c_id = self.id_generator()
+        super(Classroom, self).save()
 
     class Meta:
         unique_together = ('owner', 'code',)
+        ordering = ['code']
 
     def __str__(self):
         return f"{self.name} ({self.code})"
-
-
-class Classroom_Time_Off(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    classroom_id = models.ForeignKey(Classroom, on_delete=models.CASCADE)
-    bell_timing = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
-    working_day = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    id = models.UUIDField(
-        default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-
-    class Meta:
-        unique_together = (
-            'owner', 'classroom_id', 'bell_timing', 'working_day')
-
-    def __str__(self):
-        return f"{self.classroom_id}"
 
 
 class Semester(models.Model):
@@ -107,9 +163,20 @@ class Semester(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    time_off = models.ManyToManyField(Time_Off)
+
+    def id_generator(self):
+        return ((self.code) + ("-") +
+                (self.name))[0:64]
+
+    def save(self):
+        self.c_id = self.id_generator()
+        super(Semester, self).save()
 
     class Meta:
         unique_together = ('owner', 'code',)
+        ordering = ['code']
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -123,29 +190,21 @@ class Semester_Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+
+    def id_generator(self):
+        return ((self.code) + ("-") +
+                (self.name))[0:64]
+
+    def save(self):
+        self.c_id = self.id_generator()
+        super(Semester_Group, self).save()
 
     class Meta:
         unique_together = ('owner', 'code', 'semester')
 
     def __str__(self):
         return f"{self.name} ({self.code})"
-
-
-class Semester_Time_Off(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
-    bell_timing = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
-    working_day = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    id = models.UUIDField(
-        default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-
-    class Meta:
-        unique_together = (
-            'owner', 'semester', 'bell_timing', 'working_day')
-
-    def __str__(self):
-        return f"{self.semester}"
 
 
 class Teacher(models.Model):
@@ -156,6 +215,17 @@ class Teacher(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    time_off = models.ManyToManyField(Time_Off)
+
+    def id_generator(self):
+        return ((self.code) + ("-") +
+                (self.name) + ("-") +
+                (self.color))[0:64]
+
+    def save(self):
+        self.c_id = self.id_generator()
+        super(Teacher, self).save()
 
     class Meta:
         unique_together = ('owner', 'code',)
@@ -164,29 +234,11 @@ class Teacher(models.Model):
         return f"{self.name} ({self.code})"
 
 
-class Teacher_Time_Off(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    teacher_id = models.ForeignKey(Teacher, on_delete=models.CASCADE)
-    bell_timing = models.ForeignKey(Bell_Timing, on_delete=models.CASCADE)
-    working_day = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
-    created_at = models.DateTimeField(auto_now_add=True)
-    id = models.UUIDField(
-        default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-
-    class Meta:
-        unique_together = (
-            'owner', 'teacher_id', 'bell_timing', 'working_day')
-
-    def __str__(self):
-        return f"{self.teacher_id}"
-
-
 class Lesson(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     teacher = models.ManyToManyField(Teacher)
     classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    semester = models.ManyToManyField(Semester)
     semester_group = models.ManyToManyField(Semester_Group)
     lesson_per_week = models.IntegerField(default=1)
     lesson_length = models.IntegerField(default=0)
