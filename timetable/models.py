@@ -155,6 +155,30 @@ class Classroom(models.Model):
         return f"{self.name} ({self.code})"
 
 
+class Semester_Group(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField(max_length=250)
+    code = models.CharField(max_length=25)
+    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.UUIDField(
+        default=uuid.uuid4, primary_key=True, unique=True, editable=False)
+    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+
+    def id_generator(self):
+        return ((self.code) + ("-") +
+                (self.name))[0:64]
+
+    def save(self, *args, **kwargs):
+        self.c_id = self.id_generator()
+        super(Semester_Group, self).save(*args, **kwargs)
+
+    class Meta:
+        unique_together = ('owner', 'code')
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
 class Semester(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=250)
@@ -165,43 +189,19 @@ class Semester(models.Model):
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
     c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
     time_off = models.ManyToManyField(Time_Off)
+    groups = models.ManyToManyField(Semester_Group)
 
     def id_generator(self):
         return ((self.code) + ("-") +
                 (self.name))[0:64]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.c_id = self.id_generator()
-        super(Semester, self).save()
+        super(Semester, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('owner', 'code',)
         ordering = ['code']
-
-    def __str__(self):
-        return f"{self.name} ({self.code})"
-
-
-class Semester_Group(models.Model):
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
-    name = models.CharField(max_length=250)
-    code = models.CharField(max_length=25)
-    created_at = models.DateTimeField(auto_now_add=True)
-    id = models.UUIDField(
-        default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
-
-    def id_generator(self):
-        return ((self.code) + ("-") +
-                (self.name))[0:64]
-
-    def save(self):
-        self.c_id = self.id_generator()
-        super(Semester_Group, self).save()
-
-    class Meta:
-        unique_together = ('owner', 'code', 'semester')
 
     def __str__(self):
         return f"{self.name} ({self.code})"
@@ -223,9 +223,9 @@ class Teacher(models.Model):
                 (self.name) + ("-") +
                 (self.color))[0:64]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.c_id = self.id_generator()
-        super(Teacher, self).save()
+        super(Teacher, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('owner', 'code',)

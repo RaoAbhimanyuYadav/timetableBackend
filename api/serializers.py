@@ -114,89 +114,69 @@ class ClassroomSerializer(serializers.ModelSerializer):
         return instance
 
 
-# class SemesterTimeOffSerializer(serializers.ModelSerializer):
-#     bell_timing = BellTimingSerializer(many=False)
-#     working_day = WorkingDaySerializer(many=False)
+class SemesterGroupSerializer(serializers.ModelSerializer):
 
-#     class Meta:
-#         model = Semester_Time_Off
-#         fields = ['id', 'bell_timing', 'working_day']
-
-#     def create(self, validated_data, instance, user):
-#         return set_time_off_handler(
-#             validated_data, instance, user, 'semester', Semester_Time_Off)
+    class Meta:
+        model = Semester_Group
+        exclude = ['owner', 'created_at']
 
 
-# class SemesterGroupSerializer(serializers.ModelSerializer):
+class SemesterSerializer(serializers.ModelSerializer):
+    time_off = TimeOffSerializer(many=True, read_only=True)
+    groups = SemesterGroupSerializer(many=True, read_only=True)
+    classroom = ClassroomSerializer(many=False, read_only=True)
 
-#     class Meta:
-#         model = Semester_Group
-#         fields = ['id', 'name', 'code']
+    class Meta:
+        model = Semester
+        exclude = ['owner', 'created_at']
 
-#     def create(self, data, instance, user):
-#         return Semester_Group.objects.create(
-#             owner=user, name=data['name'], code=data['code'], semester=instance)
+    def create(self, validated_data):
+        c_inst = Classroom.objects.get(id=validated_data['classroom']['id'])
+        instance = Semester.objects.create(
+            code=validated_data['code'],
+            name=validated_data['name'],
+            owner=validated_data['owner'],
+            classroom=c_inst)
 
+        for data in validated_data['time_off']:
+            t_inst = Time_Off.objects.get(
+                bell_timing=data['bell_timing']['id'],
+                working_day=data['working_day']['id']
+            )
+            instance.time_off.add(t_inst)
 
-# class SemesterSerializer(serializers.ModelSerializer):
-#     semester_time_off_set = SemesterTimeOffSerializer(many=True)
-#     semester_group_set = SemesterGroupSerializer(many=True)
-#     classroom = ClassroomSerializer(many=False)
+        for data in validated_data['groups']:
+            g_inst = Semester_Group.objects.get(
+                id=data['id']
+            )
+            instance.groups.add(g_inst)
 
-#     class Meta:
-#         model = Semester
-#         fields = [
-#             'id', 'name', 'code', 'classroom', 'semester_time_off_set', 'semester_group_set']
+        instance.save()
+        return instance
 
-#     def create(self, validated_data, user):
-#         classroom = Classroom.objects.get(
-#             id=validated_data['classroom']['id'])
-#         kwargs = {}
-#         for key in ['name', 'code']:
-#             kwargs[key] = validated_data[key]
-#         instance = Semester.objects.create(
-#             owner=user, **kwargs, classroom=classroom)
+    def update(self, instance, validated_data):
+        instance.name = validated_data.get('name', instance.name)
+        instance.code = validated_data.get('code', instance.code)
+        instance.classroom = Classroom.objects.get(
+            id=validated_data.get('classroom', {}).get('id', instance.classroom.id))
 
-#         for data in validated_data['semester_time_off_set']:
-#             SemesterTimeOffSerializer().create(data, instance, user)
+        instance.time_off.clear()
+        for data in validated_data['time_off']:
+            t_inst = Time_Off.objects.get(
+                bell_timing=data['bell_timing']['id'],
+                working_day=data['working_day']['id']
+            )
+            instance.time_off.add(t_inst)
 
-#         for data in validated_data['semester_group_set']:
-#             SemesterGroupSerializer().create(data, instance, user)
+        instance.groups.clear()
+        for data in validated_data['groups']:
+            g_inst = Semester_Group.objects.get(
+                id=data['id']
+            )
+            instance.groups.add(g_inst)
 
-#         return SemesterSerializer(instance, many=False).data
-
-#     def update(self, instance, validated_data, user):
-#         instance.name = validated_data.get('name', instance.name)
-#         instance.code = validated_data.get('code', instance.code)
-#         instance.classroom = Classroom.objects.get(
-#             id=validated_data.get('classroom', {}).get('id', instance.classroom.id))
-#         instance.save()
-
-#         new_time_data = validated_data.get('semester_time_off_set', [])
-#         new_grp_data = validated_data.get('semester_group_set', [])
-#         old_time = instance.semester_time_off_set.all()
-#         old_time_data = SemesterTimeOffSerializer(old_time, many=True).data
-#         for data in old_time_data:
-#             if data not in new_time_data:
-#                 # Remove already present data
-#                 Semester_Time_Off.objects.get(id=data['id']).delete()
-#         # NEWLY ADDED
-#         for data in new_time_data:
-#             if 'id' not in data:
-#                 SemesterTimeOffSerializer().create(data, instance, user)
-
-#         old_grp = instance.semester_group_set.all()
-#         old_grp_data = SemesterGroupSerializer(old_grp, many=True).data
-#         for data in old_grp_data:
-#             if data not in new_grp_data:
-#                 # Remove already present data
-#                 Semester_Group.objects.get(id=data['id']).delete()
-#         # NEWLY ADDED
-#         for data in new_grp_data:
-#             if 'id' not in data:
-#                 SemesterGroupSerializer().create(data, instance, user)
-
-#         return SemesterSerializer(instance, many=False).data
+        instance.save()
+        return instance
 
 
 # class TeacherTimeOffSerializer(serializers.ModelSerializer):

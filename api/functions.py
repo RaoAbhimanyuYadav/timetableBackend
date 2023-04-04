@@ -92,7 +92,7 @@ def update_handler(request, query, ModelSerializer, Model, **kwargs):
         instance = query.get(id=id)
         serializer = ModelSerializer(instance, data=request.data)
         if serializer.is_valid():
-            instance = serializer.save(**kwargs)
+            instance = serializer.save(owner=request.user, **kwargs)
             return Response(
                 status=200,
                 data={

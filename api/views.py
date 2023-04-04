@@ -6,16 +6,17 @@ from rest_framework_simplejwt.tokens import RefreshToken
 
 from django.contrib.auth.models import User
 
-from timetable.models import Bell_Timing, Working_Day, Subject, Classroom, Semester
+from timetable.models import Bell_Timing, Working_Day, Subject, Classroom, Semester, Semester_Group
 
 
 from .serializers import (
     BellTimingSerializer,
     WorkingDaySerializer,
+    SemesterGroupSerializer,
     TimeOffSerializer,
     SubjectSerializer,
     ClassroomSerializer,
-    # SemesterSerializer,
+    SemesterSerializer,
     # TeacherSerializer,
     # LessonSerializer,
     # LessonFormatSerializer
@@ -92,6 +93,27 @@ def workingDayView(request):
         )
 
 
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def semGroupView(request):
+    user = request.user
+    if request.method == 'GET':
+        return get_handler(
+            user.semester_group_set, SemesterGroupSerializer, "Semester Group"
+        )
+    if request.method == 'POST':
+        return create_handler(request, SemesterGroupSerializer, "Code must be unique")
+    if request.method == 'DELETE':
+        return delete_handler(
+            user.semester_group_set, request, 'Semester Group'
+        )
+    if request.method == 'PUT':
+        return update_handler(
+            request, user.semester_group_set,
+            SemesterGroupSerializer, Semester_Group
+        )
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def timeOffView(request):
@@ -151,28 +173,48 @@ def classroomView(request):
             time_off=request.data.get('time_off', [])
         )
 
-# @api_view(['GET', 'POST', 'PUT', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def semesterView(request):
-#     user = request.user
-#     if request.method == 'GET':
-#         return get_handler(
-#             user.semester_set, SemesterSerializer, "Semester"
-#         )
-#     if request.method == 'POST':
-#         return create_handler(
-#             request, SemesterSerializer, "Semester Code must be unique",
-#             time_off=request.data.get('time_off', [])
-#         )
-#     if request.method == 'DELETE':
-#         return delete_handler(
-#             user.semester_set, request, 'Semester'
-#         )
-#     if request.method == 'PUT':
-#         return update_handler(
-#             request, user.semester_set,
-#             SemesterSerializer, Semester, time_off=request.data.get('time_off', [])
-#         )
+
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def semesterView(request):
+    user = request.user
+    if request.method == 'GET':
+        return get_handler(
+            user.semester_set, SemesterSerializer, "Semester"
+        )
+    if request.method == 'POST' or request.method == "PUT":
+        if 'classroom' in request.data:
+            if request.data.get('groups', []).__len__() > 0:
+                if request.method == "POST":
+                    return create_handler(
+                        request, SemesterSerializer, "Semester Code must be unique",
+                        classroom=request.data['classroom'],
+                        time_off=request.data.get('time_off', []),
+                        groups=request.data['groups']
+                    )
+                if request.method == "PUT":
+                    return update_handler(
+                        request, user.semester_set,
+                        SemesterSerializer, Semester,
+                        classroom=request.data['classroom'],
+                        time_off=request.data.get('time_off', []),
+                        groups=request.data['groups']
+                    )
+
+            else:
+                return Response(
+                    status=400,
+                    data={"message": "Please select at least 1 group"}
+                )
+        else:
+            return Response(
+                status=400,
+                data={"message": "Please send classroom"}
+            )
+    if request.method == 'DELETE':
+        return delete_handler(
+            user.semester_set, request, 'Semester'
+        )
 
 
 # @api_view(['GET', 'POST', 'PUT', 'DELETE'])
