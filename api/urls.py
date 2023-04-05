@@ -18,7 +18,7 @@ urlpatterns = [
     path("classroom/", views.classroomView, name='classroom'),
     path("semester/", views.semesterView, name='semester'),
     path("semgroup/", views.semGroupView, name='semgroup'),
-    # path("teacher/", views.teacherView, name='teacher'),
+    path("teacher/", views.teacherView, name='teacher'),
     # path("lesson/", views.lessonView, name='lesson'),
     # path("all/", views.allView, name='all'),
 
