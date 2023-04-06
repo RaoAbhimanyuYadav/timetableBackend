@@ -23,6 +23,7 @@ from .serializers import (
     SemesterSerializer,
     TeacherSerializer,
     LessonSerializer,
+    SemesterGroupSerializer
     # LessonFormatSerializer
 )
 
@@ -288,30 +289,20 @@ def lessonView(request):
         )
 
 
-# @api_view(['GET'])
-# @permission_classes([IsAuthenticated])
-# def allView(request):
-#     user = request.user
-#     if request.method == 'GET':
-#         resp = {
-#             'bellTiming': get_handler(
-#                 user.bell_timing_set, BellTimingSerializer, 'Bell Timing'
-#             )['data'],
-#             'workingDay': get_handler(
-#                 user.working_day_set, WorkingDaySerializer, "Working Day"
-#             )['data'],
-#             'subject': get_handler(
-#                 user.subject_set, SubjectSerializer, "Subject"
-#             )['data'],
-#             'semester': get_handler(
-#                 user.semester_set, SemesterSerializer, 'Semester'
-#             )['data'],
-#             'classroom': get_handler(
-#                 user.classroom_set, ClassroomSerializer, "Classroom"
-#             )['data'],
-#             'teacher': get_handler(
-#                 user.teacher_set, TeacherSerializer, 'Teacher'
-#             )['data']
-#         }
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def allView(request):
+    user = request.user
+    if request.method == 'GET':
+        resp = {
+            "message": "All data fetched successfully",
+            'bellTiming': BellTimingSerializer(user.bell_timing_set.all(), many=True).data,
+            'workingDay': WorkingDaySerializer(user.working_day_set.all(), many=True).data,
+            'subject': SubjectSerializer(user.subject_set.all(), many=True).data,
+            'semester': SemesterSerializer(user.semester_set.all(), many=True).data,
+            'classroom':  ClassroomSerializer(user.classroom_set.all(), many=True).data,
+            'teacher': TeacherSerializer(user.teacher_set.all(), many=True).data,
+            "groups": SemesterGroupSerializer(user.semester_group_set.all(), many=True).data
+        }
 
-#         return Response(resp)
+        return Response(data=resp, status=200)

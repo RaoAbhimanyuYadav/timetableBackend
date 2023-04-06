@@ -20,7 +20,7 @@ urlpatterns = [
     path("semgroup/", views.semGroupView, name='semgroup'),
     path("teacher/", views.teacherView, name='teacher'),
     path("lesson/", views.lessonView, name='lesson'),
-    # path("all/", views.allView, name='all'),
+    path("all/", views.allView, name='all'),
 
     path('login/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     path('login/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
