@@ -155,7 +155,7 @@ class Classroom(models.Model):
         return f"{self.name} ({self.code})"
 
 
-class Semester_Group(models.Model):
+class Group(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     name = models.CharField(max_length=250)
     code = models.CharField(max_length=25)
@@ -170,7 +170,7 @@ class Semester_Group(models.Model):
 
     def save(self, *args, **kwargs):
         self.c_id = self.id_generator()
-        super(Semester_Group, self).save(*args, **kwargs)
+        super(Group, self).save(*args, **kwargs)
 
     class Meta:
         unique_together = ('owner', 'code')
@@ -189,7 +189,7 @@ class Semester(models.Model):
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
     c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
     time_off = models.ManyToManyField(Time_Off)
-    groups = models.ManyToManyField(Semester_Group)
+    groups = models.ManyToManyField(Group)
 
     def id_generator(self):
         return ((self.code) + ("-") +
@@ -252,4 +252,4 @@ class Lesson(models.Model):
 class SemGrpCombo(models.Model):
     lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
     semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
-    group = models.ForeignKey(Semester_Group, on_delete=models.CASCADE)
+    group = models.ForeignKey(Group, on_delete=models.CASCADE)

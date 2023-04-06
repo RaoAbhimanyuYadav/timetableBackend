@@ -4,7 +4,7 @@ from django.core.exceptions import ValidationError
 from timetable.models import (
     Bell_Timing, Working_Day, Lesson,
     Subject, Time_Off,
-    Semester, Semester_Group,
+    Semester, Group,
     Classroom, Teacher, SemGrpCombo
 )
 
@@ -89,16 +89,16 @@ class ClassroomSerializer(serializers.ModelSerializer):
         return instance
 
 
-class SemesterGroupSerializer(serializers.ModelSerializer):
+class GroupSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Semester_Group
+        model = Group
         exclude = ['owner', 'created_at']
 
 
 class SemesterSerializer(serializers.ModelSerializer):
     time_off = TimeOffSerializer(many=True, read_only=True)
-    groups = SemesterGroupSerializer(many=True, read_only=True)
+    groups = GroupSerializer(many=True, read_only=True)
     classroom = ClassroomSerializer(many=False, read_only=True)
 
     class Meta:
@@ -119,7 +119,7 @@ class SemesterSerializer(serializers.ModelSerializer):
             add_time_off_handler(instance, validated_data)
 
             for data in validated_data['groups']:
-                g_inst = Semester_Group.objects.get(
+                g_inst = Group.objects.get(
                     id=data['id']
                 )
                 instance.groups.add(g_inst)
@@ -129,7 +129,7 @@ class SemesterSerializer(serializers.ModelSerializer):
         except Classroom.DoesNotExist:
             raise Exception(
                 "Please enter correct classroom")
-        except Semester_Group.DoesNotExist:
+        except Group.DoesNotExist:
             instance.delete()
             raise Exception(
                 "Please enter correct Semester Group")
@@ -150,7 +150,7 @@ class SemesterSerializer(serializers.ModelSerializer):
 
             instance.groups.clear()
             for data in validated_data['groups']:
-                g_inst = Semester_Group.objects.get(
+                g_inst = Group.objects.get(
                     id=data['id']
                 )
                 instance.groups.add(g_inst)
@@ -160,7 +160,7 @@ class SemesterSerializer(serializers.ModelSerializer):
         except Semester.DoesNotExist:
             raise Semester.DoesNotExist(
                 "Please enter correct semester", instance)
-        except Semester_Group.DoesNotExist:
+        except Group.DoesNotExist:
             raise Exception(
                 "Please enter correct Semester Group")
         except ValidationError:
@@ -199,7 +199,7 @@ class TeacherSerializer(serializers.ModelSerializer):
 
 class SemGrpComboSerializer(serializers.ModelSerializer):
     semester = SemesterSerializer(many=False)
-    group = SemesterGroupSerializer(many=False)
+    group = GroupSerializer(many=False)
 
     class Meta:
         model = SemGrpCombo
@@ -256,7 +256,7 @@ class LessonSerializer(serializers.ModelSerializer):
                     .get('semester', {})
                     .get('id', uuid.uuid4())
                 )
-                grp_inst = Semester_Group.objects.get(
+                grp_inst = Group.objects.get(
                     id=sem_grp
                     .get('group', {})
                     .get('id', uuid.uuid4())
@@ -279,7 +279,7 @@ class LessonSerializer(serializers.ModelSerializer):
             SemGrpCombo.objects.filter(lesson=instance).delete()
             instance.delete()
             raise Exception("Enter valid semesters.")
-        except Semester_Group.DoesNotExist:
+        except Group.DoesNotExist:
             SemGrpCombo.objects.filter(lesson=instance).delete()
             instance.delete()
             raise Exception("Enter valid groups.")
@@ -326,7 +326,7 @@ class LessonSerializer(serializers.ModelSerializer):
                     .get('semester', {})
                     .get('id', uuid.uuid4())
                 )
-                grp_inst = Semester_Group.objects.get(
+                grp_inst = Group.objects.get(
                     id=sem_grp
                     .get('group', {})
                     .get('id', uuid.uuid4())
@@ -350,7 +350,7 @@ class LessonSerializer(serializers.ModelSerializer):
             raise Time_Off.DoesNotExist("Enter valid teachers.", instance)
         except Semester.DoesNotExist:
             raise Time_Off.DoesNotExist("Enter valid semester.", instance)
-        except Semester_Group.DoesNotExist:
+        except Group.DoesNotExist:
             raise Time_Off.DoesNotExist("Enter valid groups.", instance)
         except ValidationError as err:
             raise Time_Off.DoesNotExist(

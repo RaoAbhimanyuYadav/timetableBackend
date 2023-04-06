@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 
 from timetable.models import (
     Bell_Timing, Working_Day, Subject,
-    Classroom, Semester, Semester_Group,
+    Classroom, Semester, Group,
     Teacher, Lesson
 )
 
@@ -16,14 +16,13 @@ from timetable.models import (
 from .serializers import (
     BellTimingSerializer,
     WorkingDaySerializer,
-    SemesterGroupSerializer,
+    GroupSerializer,
     TimeOffSerializer,
     SubjectSerializer,
     ClassroomSerializer,
     SemesterSerializer,
     TeacherSerializer,
     LessonSerializer,
-    SemesterGroupSerializer
     # LessonFormatSerializer
 )
 
@@ -101,22 +100,22 @@ def workingDayView(request):
 
 @api_view(['GET', 'POST', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
-def semGroupView(request):
+def groupView(request):
     user = request.user
     if request.method == 'GET':
         return get_handler(
-            user.semester_group_set, SemesterGroupSerializer, "Semester Group"
+            user.group_set, GroupSerializer, "Semester Group"
         )
     if request.method == 'POST':
-        return create_handler(request, SemesterGroupSerializer, "Code must be unique")
+        return create_handler(request, GroupSerializer, "Code must be unique")
     if request.method == 'DELETE':
         return delete_handler(
-            user.semester_group_set, request, 'Semester Group'
+            user.group_set, request, 'Semester Group'
         )
     if request.method == 'PUT':
         return update_handler(
-            request, user.semester_group_set,
-            SemesterGroupSerializer, Semester_Group
+            request, user.group_set,
+            GroupSerializer, Group
         )
 
 
@@ -302,7 +301,8 @@ def allView(request):
             'semester': SemesterSerializer(user.semester_set.all(), many=True).data,
             'classroom':  ClassroomSerializer(user.classroom_set.all(), many=True).data,
             'teacher': TeacherSerializer(user.teacher_set.all(), many=True).data,
-            "groups": SemesterGroupSerializer(user.semester_group_set.all(), many=True).data
+            "groups": GroupSerializer(user.group_set.all(), many=True).data,
+            'timeOffs': TimeOffSerializer(user.time_off_set.all(), many=True).data
         }
 
         return Response(data=resp, status=200)
