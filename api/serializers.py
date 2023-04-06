@@ -5,9 +5,11 @@ from timetable.models import (
     Bell_Timing, Working_Day, Lesson,
     Subject, Time_Off,
     Semester, Semester_Group,
-    Classroom, Teacher)
+    Classroom, Teacher, SemGrpCombo
+)
 
 from .functions import add_time_off_handler
+import uuid
 
 
 class BellTimingSerializer(serializers.ModelSerializer):
@@ -195,74 +197,164 @@ class TeacherSerializer(serializers.ModelSerializer):
         return instance
 
 
-# class LessonSerializer(serializers.ModelSerializer):
-#     classroom = ClassroomSerializer(many=False)
-#     subject = SubjectSerializer(many=False)
-#     semester = SemesterSerializer(many=True)
-#     semester_group = SemesterGroupSerializer(many=True)
-#     teacher = TeacherSerializer(many=True)
+class SemGrpComboSerializer(serializers.ModelSerializer):
+    semester = SemesterSerializer(many=False)
+    group = SemesterGroupSerializer(many=False)
 
-#     class Meta:
-#         model = Lesson
-#         fields = [
-#             'id',  'teacher', 'classroom', 'subject',
-#             'semester', 'semester_group', 'lesson_per_week', 'lesson_length']
+    class Meta:
+        model = SemGrpCombo
+        fields = ['semester', 'group']
 
-#     def create(self, data, user):
-#         classroom_inst = Classroom.objects.get(id=data['classroom']['id'])
-#         subject_inst = Subject.objects.get(id=data['subject']['id'])
-#         lesson_per_week = data['lesson_per_week']
-#         lesson_length = data['lesson_length']
 
-#         instance = Lesson.objects.create(
-#             owner=user, subject=subject_inst, classroom=classroom_inst,
-#             lesson_per_week=lesson_per_week, lesson_length=lesson_length)
+class LessonSerializer(serializers.ModelSerializer):
+    classroom = ClassroomSerializer(many=False, read_only=True)
+    subject = SubjectSerializer(many=False, read_only=True)
+    teachers = TeacherSerializer(many=True, read_only=True)
+    sem_grps = serializers.SerializerMethodField('get_sem_grps')
 
-#         for t_id in data['teacher']:
-#             teacher_inst = Teacher.objects.get(id=t_id['id'])
-#             instance.teacher.add(teacher_inst)
+    def get_sem_grps(self, instance):
+        sem_grp_inst = SemGrpCombo.objects.filter(lesson=instance)
+        data = []
+        for inst in sem_grp_inst:
+            data.append(SemGrpComboSerializer(instance=inst).data)
+        return data
 
-#         for s_id in data['semester']:
-#             semester_inst = Semester.objects.get(id=s_id['id'])
-#             instance.semester.add(semester_inst)
+    class Meta:
+        model = Lesson
+        fields = [
+            'id', 'teachers', 'classroom', 'subject',
+            'lesson_per_week', 'lesson_length', 'sem_grps'
+        ]
 
-#         for g_id in data['semester_group']:
-#             semester_grp_inst = Semester_Group.objects.get(id=g_id['id'])
-#             instance.semester_group.add(semester_grp_inst)
+    def create(self, validated_data):
+        try:
+            instance = Lesson(
+                owner=validated_data['owner'],
+                lesson_per_week=validated_data.get('lesson_per_week', 1),
+                lesson_length=validated_data.get('lesson_length', 1)
+            )
+            instance.classroom = Classroom.objects.get(
+                id=validated_data
+                    .get('classroom', {})
+                    .get('id', uuid.uuid4())
+            )
+            instance.subject = Subject.objects.get(
+                id=validated_data
+                    .get('subject', {})
+                    .get('id', uuid.uuid4())
+            )
+            instance.save()
 
-#         return LessonSerializer(instance, many=False).data
+            for t_id in validated_data['teachers']:
+                teacher_inst = Teacher.objects.get(
+                    id=t_id.get("id", uuid.uuid4()))
+                instance.teachers.add(teacher_inst)
 
-#     def update(self, instance, data, user):
-#         instance.lesson_per_week = data.get(
-#             'lesson_per_week', instance.lesson_per_week)
-#         instance.lesson_length = data.get(
-#             'lesson_length', instance.lesson_length)
-#         instance.subject = Subject.objects.get(id=data.get(
-#             'subject', {}).get('id', instance.subject.id))
-#         instance.classroom = Classroom.objects.get(
-#             id=data.get('classroom', {}).get('id', instance.classroom.id))
+            for sem_grp in validated_data['sem_grps']:
+                sem_inst = Semester.objects.get(
+                    id=sem_grp
+                    .get('semester', {})
+                    .get('id', uuid.uuid4())
+                )
+                grp_inst = Semester_Group.objects.get(
+                    id=sem_grp
+                    .get('group', {})
+                    .get('id', uuid.uuid4())
+                )
+                SemGrpCombo.objects.create(
+                    lesson=instance,
+                    semester=sem_inst,
+                    group=grp_inst
+                )
 
-#         new_set = []
-#         for t_id in data['teacher']:
-#             teacher_inst = Teacher.objects.get(id=t_id['id'])
-#             new_set.append(teacher_inst)
-#         instance.teacher.set(new_set)
+            return instance
+        except Classroom.DoesNotExist:
+            raise Exception("Enter a valid classroom.")
+        except Subject.DoesNotExist:
+            raise Exception("Enter a valid Subject.")
+        except Teacher.DoesNotExist:
+            instance.delete()
+            raise Exception("Enter valid teachers.")
+        except Semester.DoesNotExist:
+            SemGrpCombo.objects.filter(lesson=instance).delete()
+            instance.delete()
+            raise Exception("Enter valid semesters.")
+        except Semester_Group.DoesNotExist:
+            SemGrpCombo.objects.filter(lesson=instance).delete()
+            instance.delete()
+            raise Exception("Enter valid groups.")
+        except ValidationError as err:
+            SemGrpCombo.objects.filter(lesson=instance).delete()
+            instance.delete()
+            raise Exception(err.args[0])
 
-#         new_set = []
-#         for s_id in data['semester']:
-#             semester_inst = Semester.objects.get(id=s_id['id'])
-#             new_set.append(semester_inst)
-#         instance.semester.set(new_set)
+    def update(self, instance, validated_data):
+        try:
+            instance.lesson_per_week = validated_data.get(
+                'lesson_per_week', instance.lesson_per_week)
+            instance.lesson_length = validated_data.get(
+                'lesson_length', instance.lesson_length)
 
-#         new_set = []
-#         for g_id in data['semester_group']:
-#             semester_grp_inst = Semester_Group.objects.get(id=g_id['id'])
-#             new_set.append(semester_grp_inst)
-#         instance.semester_group.set(new_set)
+            instance.subject = Subject.objects.get(id=validated_data.get(
+                'subject', {}).get('id', instance.subject.id))
+            instance.classroom = Classroom.objects.get(
+                id=validated_data.get('classroom', {}).get('id', instance.classroom.id))
+            instance.save()
 
-#         instance.save()
-#         return LessonSerializer(instance, many=False).data
+            if validated_data.get('teachers', []).__len__() == 0:
+                raise Time_Off.DoesNotExist(
+                    "teachers can't be empty", instance)
 
+            teachers_inst = []
+            for t_id in validated_data.get('teachers', []):
+                teacher_inst = Teacher.objects.get(
+                    id=t_id.get("id", uuid.uuid4()))
+                teachers_inst.append(teacher_inst)
+
+            instance.teachers.clear()
+            for t_inst in teachers_inst:
+                instance.teachers.add(t_inst)
+            instance.save()
+
+            if validated_data.get('sem_grps', []).__len__() == 0:
+                raise Time_Off.DoesNotExist(
+                    "Sem_grps can't be empty", instance)
+            sem_grps = []
+            for sem_grp in validated_data['sem_grps']:
+                sem_inst = Semester.objects.get(
+                    id=sem_grp
+                    .get('semester', {})
+                    .get('id', uuid.uuid4())
+                )
+                grp_inst = Semester_Group.objects.get(
+                    id=sem_grp
+                    .get('group', {})
+                    .get('id', uuid.uuid4())
+                )
+                sem_grps.append((sem_inst, grp_inst))
+
+            SemGrpCombo.objects.filter(lesson=instance).delete()
+            for sem_grp in sem_grps:
+                SemGrpCombo.objects.create(
+                    lesson=instance,
+                    semester=sem_grp[0],
+                    group=sem_grp[1]
+                )
+            instance.save()
+            return instance
+        except Classroom.DoesNotExist:
+            raise Exception("Enter a valid classroom.")
+        except Subject.DoesNotExist:
+            raise Exception("Enter a valid Subject.")
+        except Teacher.DoesNotExist:
+            raise Time_Off.DoesNotExist("Enter valid teachers.", instance)
+        except Semester.DoesNotExist:
+            raise Time_Off.DoesNotExist("Enter valid semester.", instance)
+        except Semester_Group.DoesNotExist:
+            raise Time_Off.DoesNotExist("Enter valid groups.", instance)
+        except ValidationError as err:
+            raise Time_Off.DoesNotExist(
+                err.args[0], instance)
 
 # class TeacherFormatSerializer(serializers.ModelSerializer):
 #     teacher_time_off_set = TeacherTimeOffSerializer(many=True)

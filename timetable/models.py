@@ -236,10 +236,9 @@ class Teacher(models.Model):
 
 class Lesson(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
-    teacher = models.ManyToManyField(Teacher)
+    teachers = models.ManyToManyField(Teacher)
     classroom = models.ForeignKey(Classroom, on_delete=models.CASCADE)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    semester_group = models.ManyToManyField(Semester_Group)
     lesson_per_week = models.IntegerField(default=1)
     lesson_length = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -248,3 +247,9 @@ class Lesson(models.Model):
 
     def __str__(self):
         return f"{self.classroom} {self.subject}"
+
+
+class SemGrpCombo(models.Model):
+    lesson = models.ForeignKey(Lesson, on_delete=models.CASCADE)
+    semester = models.ForeignKey(Semester, on_delete=models.CASCADE)
+    group = models.ForeignKey(Semester_Group, on_delete=models.CASCADE)

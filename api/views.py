@@ -9,7 +9,7 @@ from django.contrib.auth.models import User
 from timetable.models import (
     Bell_Timing, Working_Day, Subject,
     Classroom, Semester, Semester_Group,
-    Teacher
+    Teacher, Lesson
 )
 
 
@@ -22,7 +22,7 @@ from .serializers import (
     ClassroomSerializer,
     SemesterSerializer,
     TeacherSerializer,
-    # LessonSerializer,
+    LessonSerializer,
     # LessonFormatSerializer
 )
 
@@ -247,33 +247,45 @@ def teacherView(request):
         )
 
 
-# @api_view(['GET', 'POST', 'PUT', 'DELETE'])
-# @permission_classes([IsAuthenticated])
-# def lessonView(request):
-#     user = request.user
-#     if request.method == 'GET':
-#         inst = user.lesson_set.all()
-#         if request.query_params:
-#             inst = user.lesson_set.filter(teacher=request.query_params['id'])
-#             return Response({"data": LessonSerializer(inst, many=True).data})
-#         return Response({"data": LessonFormatSerializer(inst, many=True).data})
+@api_view(['GET', 'POST', 'PUT', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def lessonView(request):
+    user = request.user
+    if request.method == 'GET':
+        inst = user.lesson_set.all()
+        if request.query_params:
+            inst = user.lesson_set.filter(teacher=request.query_params['id'])
+            return Response({"data": LessonSerializer(inst, many=True).data})
+        else:
+            return Response(
+                status=200,
+                data={
+                    "message": "Lessons fetched succesfully",
+                    "data": LessonSerializer(inst, many=True).data
+                }
+            )
 
-#     if request.method == 'POST':
-#         return Response({
-#             "message": "Lesson added successfully.",
-#             "data": LessonSerializer().create(request.data, user)
-#         })
-#     if request.method == 'DELETE':
-#         return Response(
-#             delete_handler(
-#                 user.lesson_set, request, 'Lesson'
-#             ))
-#     if request.method == 'PUT':
-#         instance = user.lesson_set.get(id=request.data['id'])
-#         return Response({
-#             "message": "Lesson Updated successfully.",
-#             "data": LessonSerializer().update(instance, request.data, user)
-#         })
+    if request.method == 'POST':
+        return create_handler(
+            request, LessonSerializer, "It must be unique",
+            classroom=request.data.get('classroom', {}),
+            subject=request.data.get('subject', {}),
+            sem_grps=request.data.get('sem_grps', [{}]),
+            teachers=request.data.get('teachers', [{}]),
+        )
+    if request.method == 'DELETE':
+        return delete_handler(
+            user.lesson_set, request, 'Lesson'
+        )
+    if request.method == 'PUT':
+        return update_handler(
+            request, user.lesson_set,
+            LessonSerializer, Lesson,
+            classroom=request.data.get('classroom', {}),
+            subject=request.data.get('subject', {}),
+            sem_grps=request.data.get('sem_grps', [{}]),
+            teachers=request.data.get('teachers', [{}]),
+        )
 
 
 # @api_view(['GET'])
