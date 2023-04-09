@@ -107,22 +107,27 @@ class SemesterSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         try:
+            instance = Semester(
+                code=validated_data['code'],
+                name=validated_data['name'],
+                owner=validated_data['owner'])
             c_inst = Classroom.objects.get(
                 id=validated_data.get('classroom', {}).get('id', ''))
 
-            instance = Semester.objects.create(
-                code=validated_data['code'],
-                name=validated_data['name'],
-                owner=validated_data['owner'],
-                classroom=c_inst)
+            instance.classroom = c_inst
+            instance.save()
 
             add_time_off_handler(instance, validated_data)
 
+            groups_inst = []
             for data in validated_data['groups']:
                 g_inst = Group.objects.get(
                     id=data['id']
                 )
-                instance.groups.add(g_inst)
+                groups_inst.append(g_inst)
+            for grp_inst in groups_inst:
+                instance.groups.add(grp_inst)
+            instance.save()
 
             instance.save()
             return instance
@@ -134,6 +139,7 @@ class SemesterSerializer(serializers.ModelSerializer):
             raise Exception(
                 "Please enter correct Semester Group")
         except ValidationError:
+            instance.delete()
             raise Exception(
                 "Please enter correct id of classroom or semester group")
 
@@ -148,13 +154,16 @@ class SemesterSerializer(serializers.ModelSerializer):
 
             add_time_off_handler(instance, validated_data)
 
-            instance.groups.clear()
+            groups_inst = []
             for data in validated_data['groups']:
                 g_inst = Group.objects.get(
                     id=data['id']
                 )
-                instance.groups.add(g_inst)
+                groups_inst.append(g_inst)
 
+            instance.groups.clear()
+            for grp_inst in groups_inst:
+                instance.groups.add(grp_inst)
             instance.save()
             return instance
         except Semester.DoesNotExist:
@@ -166,6 +175,8 @@ class SemesterSerializer(serializers.ModelSerializer):
         except ValidationError:
             raise Semester.DoesNotExist(
                 "Please enter correct semester", instance)
+        except Exception:
+            raise Exception("Please provide Group ID")
 
 
 class TeacherSerializer(serializers.ModelSerializer):

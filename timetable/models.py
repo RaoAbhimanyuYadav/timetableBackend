@@ -174,6 +174,7 @@ class Group(models.Model):
 
     class Meta:
         unique_together = ('owner', 'code')
+        ordering = ['-code']
 
     def __str__(self):
         return f"{self.name} ({self.code})"

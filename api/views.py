@@ -254,8 +254,14 @@ def lessonView(request):
     if request.method == 'GET':
         inst = user.lesson_set.all()
         if request.query_params:
-            inst = user.lesson_set.filter(teacher=request.query_params['id'])
-            return Response({"data": LessonSerializer(inst, many=True).data})
+            inst = user.lesson_set.filter(teachers=request.query_params['id'])
+            return Response(
+                status=200,
+                data={
+                    "message": "Lessons fetched succesfully",
+                    "data": LessonSerializer(inst, many=True).data
+                }
+            )
         else:
             return Response(
                 status=200,
