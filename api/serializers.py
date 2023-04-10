@@ -100,6 +100,10 @@ class SemesterSerializer(serializers.ModelSerializer):
     time_off = TimeOffSerializer(many=True, read_only=True)
     groups = GroupSerializer(many=True, read_only=True)
     classroom = ClassroomSerializer(many=False, read_only=True)
+    w_id = serializers.SerializerMethodField('get_w_id')
+
+    def get_w_id(self, sem):
+        return sem.groups.filter(code="W")[0].id
 
     class Meta:
         model = Semester
