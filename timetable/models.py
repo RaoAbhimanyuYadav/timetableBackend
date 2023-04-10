@@ -12,7 +12,7 @@ class Bell_Timing(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    c_id = models.CharField(max_length=64,  default=uuid.uuid4)
 
     def id_generator(self):
         return ((self.start_time.isoformat()[0:5]) + ("-") +
@@ -58,7 +58,7 @@ class Working_Day(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    c_id = models.CharField(max_length=64, default=uuid.uuid4)
 
     def id_generator(self):
         return ((self.name) + ("-") +
@@ -83,7 +83,7 @@ class Time_Off(models.Model):
     working_day = models.ForeignKey(Working_Day, on_delete=models.CASCADE)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    c_id = models.CharField(max_length=64, default=uuid.uuid4)
 
     def id_generator(self):
         return ((self.bell_timing.c_id) + ("-") +
@@ -110,7 +110,7 @@ class Subject(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    c_id = models.CharField(max_length=64,  default=uuid.uuid4)
     time_off = models.ManyToManyField(Time_Off)
 
     def id_generator(self):
@@ -136,7 +136,7 @@ class Classroom(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    c_id = models.CharField(max_length=64,  default=uuid.uuid4)
     time_off = models.ManyToManyField(Time_Off)
 
     def id_generator(self):
@@ -162,7 +162,7 @@ class Group(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    c_id = models.CharField(max_length=64, default=uuid.uuid4)
 
     def id_generator(self):
         return ((self.code) + ("-") +
@@ -188,7 +188,7 @@ class Semester(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    c_id = models.CharField(max_length=64, default=uuid.uuid4)
     time_off = models.ManyToManyField(Time_Off)
     groups = models.ManyToManyField(Group)
 
@@ -216,7 +216,7 @@ class Teacher(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     id = models.UUIDField(
         default=uuid.uuid4, primary_key=True, unique=True, editable=False)
-    c_id = models.CharField(max_length=64, unique=True, default=uuid.uuid4)
+    c_id = models.CharField(max_length=64, default=uuid.uuid4)
     time_off = models.ManyToManyField(Time_Off)
 
     def id_generator(self):
