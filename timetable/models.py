@@ -90,7 +90,6 @@ class Time_Off(models.Model):
                 (self.working_day.c_id))[0:64]
 
     def save(self, *args, **kwargs):
-        print(self)
         self.c_id = self.id_generator()
         super(Time_Off, self).save(*args, **kwargs)
 
