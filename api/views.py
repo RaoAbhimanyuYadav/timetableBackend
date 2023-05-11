@@ -322,13 +322,13 @@ def savedTimetableView(request):
     user = request.user
     if request.method == 'GET':
         if request.query_params:
-            inst = user.saved_timetable_set.filter(
+            inst = user.saved_timetable_set.get(
                 id=request.query_params['id'])
             return Response(
                 status=200,
                 data={
                     "message": "Saved Timetable fetched succesfully",
-                    "data": SavedTimetableSerializer(inst, many=True).data
+                    "data": SavedTimetableSerializer(inst, many=False).data
                 }
             )
         else:
