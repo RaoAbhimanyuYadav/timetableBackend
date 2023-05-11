@@ -1,7 +1,7 @@
 from django.contrib import admin
 from .models import (
     Bell_Timing, Classroom,  Lesson, Semester, Group, Subject, Time_Off,
-    Teacher, Working_Day, SemGrpCombo
+    Teacher, Working_Day, SemGrpCombo, Saved_Timetable
 )
 # Register your models here.
 
@@ -15,3 +15,4 @@ admin.site.register(Subject)
 admin.site.register(Teacher)
 admin.site.register(Working_Day)
 admin.site.register(SemGrpCombo)
+admin.site.register(Saved_Timetable)

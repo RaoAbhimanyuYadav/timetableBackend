@@ -20,6 +20,7 @@ urlpatterns = [
     path("group/", views.groupView, name='group'),
     path("teacher/", views.teacherView, name='teacher'),
     path("lesson/", views.lessonView, name='lesson'),
+    path("saved/", views.savedTimetableView, name='saved'),
     path("all/", views.allView, name='all'),
 
     path('login/token/verify/', TokenVerifyView.as_view(), name='token_verify'),

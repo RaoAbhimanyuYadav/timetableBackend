@@ -23,6 +23,8 @@ from .serializers import (
     SemesterSerializer,
     TeacherSerializer,
     LessonSerializer,
+    SavedTimetableSerializer,
+    SavedWithoutDataTimetableSerializer
     # LessonFormatSerializer
 )
 
@@ -312,3 +314,38 @@ def allView(request):
         }
 
         return Response(data=resp, status=200)
+
+
+@api_view(['GET', 'POST', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def savedTimetableView(request):
+    user = request.user
+    if request.method == 'GET':
+        if request.query_params:
+            inst = user.saved_timetable_set.filter(
+                id=request.query_params['id'])
+            return Response(
+                status=200,
+                data={
+                    "message": "Saved Timetable fetched succesfully",
+                    "data": SavedTimetableSerializer(inst, many=True).data
+                }
+            )
+        else:
+            inst = user.saved_timetable_set.all()
+            return Response(
+                status=200,
+                data={
+                    "message": "Saved Timetables fetched succesfully",
+                    "data": SavedWithoutDataTimetableSerializer(inst, many=True).data
+                }
+            )
+
+    if request.method == 'POST':
+        return create_handler(
+            request, SavedTimetableSerializer, "It must be unique",
+        )
+    if request.method == 'DELETE':
+        return delete_handler(
+            user.saved_timetable_set, request, 'Saved Timetable'
+        )

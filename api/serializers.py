@@ -5,7 +5,8 @@ from timetable.models import (
     Bell_Timing, Working_Day, Lesson,
     Subject, Time_Off,
     Semester, Group,
-    Classroom, Teacher, SemGrpCombo
+    Classroom, Teacher, SemGrpCombo,
+    Saved_Timetable
 )
 
 from .functions import add_time_off_handler
@@ -414,3 +415,15 @@ class LessonSerializer(serializers.ModelSerializer):
 #         model = Lesson
 #         fields = ["id",  "teacher", "classroom", "subject",
 #                   "semester_group", "lesson_per_week", "lesson_length"]
+
+
+class SavedTimetableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Saved_Timetable
+        exclude = ['owner']
+
+
+class SavedWithoutDataTimetableSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Saved_Timetable
+        exclude = ['owner', 'extra_lessons', 'data']
