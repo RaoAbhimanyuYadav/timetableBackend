@@ -104,7 +104,9 @@ class SemesterSerializer(serializers.ModelSerializer):
     w_id = serializers.SerializerMethodField('get_w_id')
 
     def get_w_id(self, sem):
-        return sem.groups.filter(code="W")[0].id
+        if sem.groups.filter(code="W").__len__() > 0:
+            return sem.groups.filter(code="W")[0].id
+        return ""
 
     class Meta:
         model = Semester
@@ -132,8 +134,6 @@ class SemesterSerializer(serializers.ModelSerializer):
                 groups_inst.append(g_inst)
             for grp_inst in groups_inst:
                 instance.groups.add(grp_inst)
-            instance.save()
-
             instance.save()
             return instance
         except Classroom.DoesNotExist:
@@ -371,50 +371,6 @@ class LessonSerializer(serializers.ModelSerializer):
         except ValidationError as err:
             raise Time_Off.DoesNotExist(
                 err.args[0], instance)
-
-# class TeacherFormatSerializer(serializers.ModelSerializer):
-#     teacher_time_off_set = TeacherTimeOffSerializer(many=True)
-
-#     class Meta:
-#         model = Teacher
-#         fields = ['id', "name", "code", "color", "teacher_time_off_set"]
-
-
-# class SemesterFormatSerializer(serializers.ModelSerializer):
-#     total_groups = serializers.SerializerMethodField('get_total_groups')
-#     semester_time_off_set = SemesterTimeOffSerializer(many=True)
-#     w_id = serializers.SerializerMethodField('get_w_id')
-
-#     def get_w_id(self, sem):
-#         return sem.semester_group_set.filter(code="W")[0].id
-
-#     def get_total_groups(self, sem):
-#         return sem.semester_group_set.all().__len__() - 1
-
-#     class Meta:
-#         model = Semester
-#         fields = ["id", "name", "code",
-#                   "semester_time_off_set", "total_groups", "w_id"]
-
-
-# class SemesterGroupFormatSerializer(serializers.ModelSerializer):
-#     semester = SemesterFormatSerializer(many=False)
-
-#     class Meta:
-#         model = Semester_Group
-#         fields = ['id', 'name', 'code', "semester"]
-
-
-# class LessonFormatSerializer(serializers.ModelSerializer):
-#     classroom = ClassroomSerializer(many=False)
-#     subject = SubjectSerializer(many=False)
-#     semester_group = SemesterGroupFormatSerializer(many=True)
-#     teacher = TeacherFormatSerializer(many=True)
-
-#     class Meta:
-#         model = Lesson
-#         fields = ["id",  "teacher", "classroom", "subject",
-#                   "semester_group", "lesson_per_week", "lesson_length"]
 
 
 class SavedTimetableSerializer(serializers.ModelSerializer):
