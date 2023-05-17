@@ -13,11 +13,14 @@ urlpatterns = [
 
     path("belltiming/", views.bellTimingView, name='belltiming'),
     path("workingday/", views.workingDayView, name='workingday'),
+    path("timeoff/", views.timeOffView, name='timeoff'),
     path("subject/", views.subjectView, name='subject'),
-    path("semester/", views.semesterView, name='semester'),
     path("classroom/", views.classroomView, name='classroom'),
+    path("semester/", views.semesterView, name='semester'),
+    path("group/", views.groupView, name='group'),
     path("teacher/", views.teacherView, name='teacher'),
     path("lesson/", views.lessonView, name='lesson'),
+    path("saved/", views.savedTimetableView, name='saved'),
     path("all/", views.allView, name='all'),
 
     path('login/token/verify/', TokenVerifyView.as_view(), name='token_verify'),

@@ -1,18 +1,18 @@
 from django.contrib import admin
-from .models import (Bell_Timing, Classroom, Classroom_Time_Off, Lesson, Semester, Semester_Group,
-                     Semester_Time_Off, Subject, Subject_Time_Off,
-                     Teacher, Teacher_Time_Off, Working_Day)
+from .models import (
+    Bell_Timing, Classroom,  Lesson, Semester, Group, Subject, Time_Off,
+    Teacher, Working_Day, SemGrpCombo, Saved_Timetable
+)
 # Register your models here.
 
 admin.site.register(Bell_Timing)
 admin.site.register(Classroom)
-admin.site.register(Classroom_Time_Off)
 admin.site.register(Lesson)
 admin.site.register(Semester)
-admin.site.register(Semester_Group)
-admin.site.register(Semester_Time_Off)
+admin.site.register(Group)
+admin.site.register(Time_Off)
 admin.site.register(Subject)
-admin.site.register(Subject_Time_Off)
 admin.site.register(Teacher)
-admin.site.register(Teacher_Time_Off)
 admin.site.register(Working_Day)
+admin.site.register(SemGrpCombo)
+admin.site.register(Saved_Timetable)
